@@ -38,7 +38,7 @@ function ConnectedApp() {
   if (connection.state.kind !== 'ready') return <ConnectionGate connection={connection} role={role} />
   const family = reconcileFamily(connection.state.family, now)
   return role === 'parent'
-    ? <ParentDashboard family={family} now={now} mode={connection.mode} onCommand={connection.execute} onOpenGame={() => window.location.assign(`${routes.game}#join=${encodeURIComponent(family.code)}`)} view={parentViewForPathname(window.location.pathname)} inbox={connection.inbox} onEditInbox={connection.editInbox} />
+    ? <ParentDashboard family={family} now={now} mode={connection.mode} onCommand={connection.execute} onOpenGame={() => window.location.assign(`${routes.game}#join=${encodeURIComponent(family.code)}`)} view={parentViewForPathname(window.location.pathname)} inbox={connection.inbox} onEditInbox={connection.editInbox} onVoice={connection.voice} />
     : <ChildGame family={family} now={now} onCommand={connection.execute} onSpeak={connection.speak} onAsk={connection.ask} />
 }
 

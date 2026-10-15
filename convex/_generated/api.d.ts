@@ -13,6 +13,7 @@ import type * as migrations from "../migrations.js";
 import type * as spark from "../spark.js";
 import type * as speech from "../speech.js";
 import type * as validators from "../validators.js";
+import type * as voice from "../voice.js";
 
 import type {
   ApiFromModules,
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   spark: typeof spark;
   speech: typeof speech;
   validators: typeof validators;
+  voice: typeof voice;
 }>;
 
 /**

@@ -6,6 +6,8 @@ import { projectDay, remainingMs, screenUnlocked } from '../../shared/sidequest'
 import { routes } from '../routes'
 import type { ParentView } from '../routes'
 import type { SparkAlert, SparkInboxChange } from '../../shared/spark'
+import type { AskVoice } from '../../shared/parentVoice'
+import VoiceAssistant from './VoiceAssistant'
 import ParentInbox from './ParentInbox'
 import Icon from '../components/Icon'
 import ParentWakeAlarm from './ParentWakeAlarm'
@@ -24,6 +26,7 @@ type ParentDashboardProps = {
   view: ParentView
   inbox: SparkAlert[] | null
   onEditInbox: (change: SparkInboxChange) => Promise<ActionResult>
+  onVoice: AskVoice
 }
 type DialogKind = 'add' | 'screen-time' | 'pair' | 'rename' | 'retire' | null
 type Filter = 'day' | 'pending' | 'approved'
@@ -66,7 +69,8 @@ function questStatus(quest: Quest, today: DateKey): string {
   return quest.date > today ? 'Scheduled' : quest.date < today ? 'Missed' : 'To do'
 }
 
-export default function ParentDashboard({ family, now, mode, onCommand, onOpenGame, view, inbox, onEditInbox }: ParentDashboardProps) {
+export default function ParentDashboard({ family, now, mode, onCommand, onOpenGame, view, inbox, onEditInbox, onVoice }: ParentDashboardProps) {
+  const [voiceOpen, setVoiceOpen] = useState(false)
   const today = family.sessionDay
   const [theme, setTheme] = useState<ParentTheme>(readParentTheme)
   const [selectedDay, setSelectedDay] = useState<DateKey>(today)
@@ -255,7 +259,7 @@ export default function ParentDashboard({ family, now, mode, onCommand, onOpenGa
     </div></header>
     <div className="p-shell">
       <main id="parent-main">{view === 'inbox' ? <ParentInbox family={family} now={now} mode={mode} inbox={inbox} onEdit={onEditInbox} /> : <>
-        <div className="p-page-heading"><div><h1>{family.childName}'s day</h1><p>{formatDate(today, { weekday: 'long', month: 'long', day: 'numeric' })}</p></div><button className="button button-primary" type="button" disabled={busy} onClick={() => openDialog('add')}><Icon name="plus" size={18} />Add quest</button></div>
+        <div className="p-page-heading"><div><h1>{family.childName}'s day</h1><p>{formatDate(today, { weekday: 'long', month: 'long', day: 'numeric' })}</p></div><div className="p-heading-actions"><button className="button button-secondary p-voice-button" type="button" onClick={() => setVoiceOpen(true)} aria-label="Talk to Sidequest" title="Talk to Sidequest"><Icon name="mic" size={20} /></button><button className="button button-primary" type="button" disabled={busy} onClick={() => openDialog('add')}><Icon name="plus" size={18} />Add quest</button></div></div>
         <div className="p-feedback" aria-live="polite" aria-atomic="true">
           {notice && <div className="p-notice"><Icon name="check" size={18} /><span>{notice}</span><button className="icon-button" type="button" aria-label="Dismiss message" onClick={() => setNotice(null)}><Icon name="close" size={16} /></button></div>}
           {error && !dialog && <div className="p-error" role="alert"><span>{error}</span><button className="icon-button" type="button" aria-label="Dismiss error" onClick={() => setError(null)}><Icon name="close" size={16} /></button></div>}
@@ -289,6 +293,7 @@ export default function ParentDashboard({ family, now, mode, onCommand, onOpenGa
         </section>
       </>}</main>
     </div>
+    {voiceOpen && <VoiceAssistant childName={family.childName} onAsk={onVoice} onClose={() => setVoiceOpen(false)} />}
     <dialog className="dialog-shell p-dialog" ref={dialogRef} aria-labelledby="parent-dialog-title" onClose={() => setDialog(null)} onCancel={event => { if (busy) event.preventDefault(); else setDialog(null) }} onClick={event => { if (event.target === event.currentTarget && !busy) setDialog(null) }}>
       <div className="p-dialog-heading"><button className="icon-button" type="button" aria-label="Close dialog" disabled={busy} onClick={() => setDialog(null)}><Icon name="close" size={18} /></button><h2 id="parent-dialog-title">{dialogTitle}</h2></div>
       {dialog === 'add' && <form onSubmit={event => { void submitQuest(event) }}><label className="p-field">Quest title<input autoFocus required maxLength={80} placeholder="Read for 20 minutes" value={title} onChange={event => setTitle(event.target.value)} disabled={busy} /></label><div className="p-form-row"><label className="p-field">Repeat<select value={repeat} onChange={event => { if (isRepeat(event.target.value)) setRepeat(event.target.value) }} disabled={busy}><option value="once">Once</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select></label><label className="p-field">{repeat === 'once' ? 'Due on' : 'Starts on'}<input type="date" required min={today} value={dateInput} onChange={event => setDateInput(event.target.value)} disabled={busy} /></label></div>{repeat === 'weekly' && <fieldset className="p-weekday-field"><legend>Repeat on</legend><div>{weekdays.map(day => <button key={day.value} type="button" aria-label={day.label} aria-pressed={chosenDays.includes(day.value)} className={chosenDays.includes(day.value) ? 'p-weekday p-weekday-selected' : 'p-weekday'} disabled={busy} onClick={() => setChosenDays(current => current.includes(day.value) ? current.filter(value => value !== day.value) : [...current, day.value])}>{day.short}</button>)}</div></fieldset>}<p className="p-schedule-preview">{schedulePreview}</p><div className="p-form-row"><label className="p-field">XP reward<input required type="number" min={1} max={500} step={1} value={xpReward} onChange={event => setXpReward(event.target.value)} disabled={busy} /></label><label className="p-field">Gold reward<input required type="number" min={1} max={100} step={1} value={goldReward} onChange={event => setGoldReward(event.target.value)} disabled={busy} /></label></div><label className="p-field">Place<select value={place} onChange={event => { if (isPlace(event.target.value)) setPlace(event.target.value) }} disabled={busy}>{places.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label><p className="p-date-zone">Dates use {family.timeZone}.</p>{error && <p className="p-dialog-error" role="alert">{error}</p>}<div className="p-dialog-actions"><button className="button button-secondary" type="button" disabled={busy} onClick={() => setDialog(null)}>Cancel</button><button className="button button-primary" type="submit" disabled={busy}>{busy ? 'Adding…' : repeat === 'once' ? 'Add quest' : 'Add repeating quest'}<Icon name="plus" size={17} /></button></div></form>}

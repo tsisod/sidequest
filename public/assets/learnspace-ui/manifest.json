@@ -1,0 +1,48 @@
+{
+  "source": "Learnspace existing game UI",
+  "source_root": "learnspace-app/frontend",
+  "assets": [
+    {
+      "source": "src/game/ui/window-frame.svg",
+      "destination": "public/assets/learnspace-ui/window-frame.svg",
+      "bytes": 364,
+      "sha256": "01ae4a034a55979e15c6ec830041e74bc7c7d87c5f0bc2ffd6373c00b35997bc"
+    },
+    {
+      "source": "src/game/GameIcon.tsx",
+      "destination": "src/game/learnspace/GameIcon.tsx",
+      "bytes": 3622,
+      "sha256": "27f1921ee7c86f4375534be2591b01b5f56d479e8407cc3ddd2868bfe4e9c06b"
+    },
+    {
+      "source": "public/assets/terminal/icons/play.png",
+      "destination": "public/assets/learnspace-ui/play.png",
+      "bytes": 827,
+      "sha256": "22f581610f33eca24d3fb05bcef037c3bf3087974308391af24989ce741fbd50"
+    },
+    {
+      "source": "public/assets/terminal/icons/pause.png",
+      "destination": "public/assets/learnspace-ui/pause.png",
+      "bytes": 300,
+      "sha256": "5568e95768343dc5b0bb21ab4fe1408ff256b740894797b25bed88b708494952"
+    },
+    {
+      "source": "game-content/assets/characters/original/spark.png",
+      "destination": "public/assets/learnspace-ui/spark-sprite.png",
+      "bytes": 528,
+      "sha256": "2f1c8692e3526890f73732c85065b884f7ded70e673b34a87dcc0c087bdb3a10"
+    },
+    {
+      "source": "game-content/assets/characters/original/spark-preview.png",
+      "destination": "public/assets/learnspace-ui/spark-preview.png",
+      "bytes": 346,
+      "sha256": "b4113215061b08f905401740507b1ecfad4429b3dec6a83710734d9d15ea4197"
+    },
+    {
+      "source": "game-content/assets/portraits/spark.png",
+      "destination": "public/assets/learnspace-ui/spark-portrait.png",
+      "bytes": 1791,
+      "sha256": "b10ac92a78b98e3484ce5f7a710a25ec61713aabab886540d1d94ac315a29130"
+    }
+  ]
+}

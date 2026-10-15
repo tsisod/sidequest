@@ -1,0 +1,21 @@
+.p-alert-list { display: grid; gap: 14px; margin-bottom: 40px; }
+.p-alert { padding: 20px 24px; }
+.p-alert-top { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.p-alert-top time { margin-left: auto; color: var(--p-muted); font-size: 12px; }
+.p-alert-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 650; }
+.p-alert-support .p-alert-badge { background: var(--p-danger-bg); color: var(--p-danger-ink); }
+.p-alert-blocked .p-alert-badge { background: var(--p-warning-bg); color: var(--p-warning-ink); }
+.p-alert-reply .p-alert-badge { background: var(--p-info-bg); color: var(--p-info-ink); }
+.p-alert-fresh { padding: 2px 10px; border-radius: 999px; background: var(--p-accent-soft); color: var(--p-accent-ink); font-size: 11px; font-weight: 700; }
+.p-alert-new { border-color: var(--p-control-line); }
+.p-alert-message { margin: 16px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--p-raised); color: var(--p-ink); font-size: 15px; line-height: 1.6; overflow-wrap: anywhere; white-space: pre-wrap; }
+.p-alert-message > span { display: block; margin-bottom: 3px; color: var(--p-muted); font-size: 12px; font-weight: 600; white-space: normal; }
+.p-alert-answer { margin-top: 10px; font-size: 13px; }
+.p-alert-answer summary { min-height: 36px; display: flex; align-items: center; color: var(--p-muted); font-weight: 600; cursor: pointer; }
+.p-alert-answer p { padding: 10px 14px; border: 1px dashed var(--p-control-line); border-radius: 12px; color: var(--p-ink); line-height: 1.6; overflow-wrap: anywhere; }
+.p-alert-note { margin-top: 12px; color: var(--p-muted); font-size: 13px; line-height: 1.7; }
+@media (max-width: 650px) {
+  .p-alert { padding: 16px; }
+  .p-alert-top time { margin-left: 0; order: 3; width: calc(100% - 60px); }
+  .p-alert-top .icon-button { margin-left: auto; }
+}

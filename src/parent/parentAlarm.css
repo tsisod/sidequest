@@ -1,0 +1,22 @@
+.p-alarm-card { display: flex; align-items: center; gap: 16px; padding: 20px 24px; margin-bottom: 24px; }
+.p-alarm-symbol { display: grid; place-items: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; color: var(--p-accent-ink); background: var(--p-accent-soft); }
+.p-alarm-copy { min-width: 0; flex: 1; }
+.p-alarm-copy h2 { font-size: 17px; font-weight: 700; letter-spacing: -.3px; }
+.p-alarm-copy p { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 5px; font-size: 13px; color: var(--p-muted); font-variant-numeric: tabular-nums; }
+.p-alarm-status { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--p-muted); background: var(--p-raised); }
+.p-alarm-enabled { color: var(--p-accent-ink); background: var(--p-accent-soft); }
+.p-alarm-card > .button { flex-shrink: 0; }
+.p-alarm-notice { font-size: 13px; color: var(--p-accent-ink); margin: -13px 0 22px !important; }
+.p-alarm-dialog form { margin-top: 24px; }
+.p-alarm-dialog input[type='time'] { font-size: 28px; font-variant-numeric: tabular-nums; min-height: 70px; }
+.p-alarm-toggle { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--p-line); cursor: pointer; }
+.p-alarm-toggle > span { display: grid; gap: 3px; }
+.p-alarm-toggle strong { font-size: 14px; font-weight: 650; }
+.p-alarm-toggle small { color: var(--p-muted); font-size: 12px; }
+.p-alarm-toggle input { appearance: none; position: relative; width: 48px; height: 28px; flex-shrink: 0; border: 1px solid var(--p-control-line); border-radius: 20px; background: var(--p-raised); cursor: pointer; margin: 0; }
+.p-alarm-toggle input::after { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; border-radius: 50%; background: var(--p-muted); transition: transform 120ms, background-color 120ms; }
+.p-alarm-toggle input:checked { background: var(--p-primary); border-color: var(--p-primary); }
+.p-alarm-toggle input:checked::after { transform: translateX(20px); background: var(--p-on-primary); }
+.p-alarm-explanation { font-size: 13px; line-height: 1.7; color: var(--p-muted); margin-top: 17px !important; }
+@media (max-width: 600px) { .p-alarm-card { padding: 20px; gap: 12px; flex-wrap: wrap; } .p-alarm-symbol { width: 40px; height: 40px; } .p-alarm-copy { flex-basis: calc(100% - 52px); } .p-alarm-card > .button { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .p-alarm-toggle input::after { transition: none; } }

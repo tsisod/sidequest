@@ -1,0 +1,40 @@
+.game-menu { width: min(520px,calc(100% - 28px)); max-height: calc(100dvh - 40px); padding: 0; overflow-y: auto; font-family: 'Pixelify Sans',monospace; }
+.game-menu::backdrop { background: #20382878; backdrop-filter: blur(3px); }
+.game-menu-top { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 4px; padding: 5px 5px 10px 10px; background: #f6e5b7; border-bottom: 2px solid #d9b77d; color: #39291f; }
+.game-menu-top:has(.game-menu-back) { padding-left: 5px; }
+.game-menu-back-icon { rotate: 180deg; }
+.game-menu-top h2 { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; margin: 0; font: 500 24px/1.2 'Pixelify Sans',monospace; }
+.game-menu-list { display: grid; gap: 8px; padding: 18px 10px 12px; }
+.game-menu-item { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 0 14px 0 8px; border: 2px solid #d9b77d; background: #fff0c7; color: #39291f; font: 20px 'Pixelify Sans',monospace; text-align: left; }
+.game-menu-item > span:last-child { display: grid; gap: 2px; }
+.game-menu-item small { color: #6e5037; font: 12px 'Manrope',sans-serif; }
+.game-menu-item:not(:disabled):is(:hover,:focus-visible) { border-color: #8c592f; background: #e8c983; }
+.game-menu-item:not(:disabled):is(:hover,:focus-visible) .menu-cursor { visibility: visible; }
+.child-app .game-menu-item:focus-visible { outline: none; }
+.game-menu-pane { display: grid; gap: 12px; padding: 18px 10px 12px; color: #39291f; }
+.game-menu-pane .wake-alarm-time { margin-top: 0; }
+.game-menu-note { margin: 0; color: #6e5037; font: 13px/1.6 'Manrope',sans-serif; }
+.keybind-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.keybind-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; border-bottom: 2px solid #d9b77d; font-size: 18px; }
+.keybind-key { min-width: 76px; min-height: 40px; padding: 4px 10px; border: 2px solid #8c592f; background: #e8c983; color: #39291f; box-shadow: inset 2px 2px #fff0c7, inset -2px -2px #bb8a4c; font: 17px 'Pixelify Sans',monospace; text-align: center; }
+button.keybind-key:hover { background: #f3d693; }
+.keybind-key[aria-pressed="true"] { min-width: 132px; background: #fff0c7; animation: keybind-listen 1s steps(2, jump-none) infinite; }
+kbd.keybind-key { display: inline-grid; place-items: center; border-color: #d9b77d; background: transparent; box-shadow: none; color: #6e5037; }
+.keybind-row-fixed { color: #6e5037; border-bottom: 0; }
+@keyframes keybind-listen { 50% { border-color: #c4533a; } }
+.game-menu-status { min-height: 1.6em; margin: 0; color: #425c2e; font: 600 13px/1.6 'Manrope',sans-serif; }
+.game-menu-button { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 12px; border: 2px solid #8c592f; background: #e8c983; color: #39291f; box-shadow: inset 2px 2px #fff0c7, inset -2px -2px #bb8a4c; font: 600 13px 'Manrope',sans-serif; }
+.game-menu-button:hover:not(:disabled) { background: #f3d693; }
+.game-menu-toggle { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; padding: 10px 0; border-bottom: 2px solid #d9b77d; cursor: pointer; }
+.game-menu-toggle > span { display: grid; gap: 3px; }
+.game-menu-toggle strong { font: 500 18px 'Pixelify Sans',monospace; }
+.game-menu-toggle small { color: #6e5037; font: 12px/1.5 'Manrope',sans-serif; }
+.game-menu-toggle input { flex-shrink: 0; width: 20px; height: 20px; margin: 0; accent-color: #5d793e; }
+.game-menu-toggle input:focus-visible { outline: 2px solid #39291f; outline-offset: 3px; }
+.game-menu-hint { display: flex; align-items: center; gap: 8px; margin: 0; padding: 4px 12px 14px; color: #6e5037; font: 14px 'Pixelify Sans',monospace; }
+.game-menu-hint kbd { padding: 2px 6px; border: 2px solid #39291f; background: #f6e5b7; box-shadow: inset 1px 1px #fff0c7, inset -1px -1px #d9b77d; font: 13px 'Pixelify Sans',monospace; }
+
+@media (pointer: coarse), (max-width: 700px) {
+  .game-menu-hint { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .keybind-key[aria-pressed="true"] { animation: none; border-color: #c4533a; } }

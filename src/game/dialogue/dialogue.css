@@ -1,0 +1,78 @@
+.npc-dialogue {
+  container: dialogue / inline-size;
+  position: fixed;
+  inset: auto 0 max(16px, env(safe-area-inset-bottom, 0px));
+  width: min(calc(100% - 16px), 720px);
+  max-height: calc(100dvh - 32px);
+  margin: 0 auto;
+  padding: 8px 12px;
+  border: 16px solid transparent;
+  border-image: url('/assets/learnspace-ui/window-frame.svg') 8 fill / 16px / 0 stretch;
+  color: #39291f;
+  background: #f6e5b7 padding-box;
+  box-shadow: none;
+  filter: drop-shadow(4px 4px 0 rgb(0 0 0 / 48%));
+  font: 1.5rem/1.3 'Pixelify Sans', ui-monospace, monospace;
+  font-synthesis: none;
+  overflow-wrap: anywhere;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.npc-dialogue::backdrop { background: rgb(9 12 19 / 52%); }
+.npc-dialogue * { font-variant-ligatures: no-common-ligatures; }
+.dialogue-page { display: grid; min-width: 0; gap: 12px; overflow-wrap: anywhere; }
+.dialogue-page--character { grid-template-columns: 128px minmax(0, 1fr); }
+.dialogue-page--character > .character-portrait { grid-column: 1; grid-row: 1 / 3; }
+.dialogue-page--character > .dialogue-nameplate, .dialogue-page--character > .dialogue-text { grid-column: 2; }
+.dialogue-page--character > .dialogue-choices, .dialogue-page--character > .dialogue-page-number, .dialogue-page--character > .dialogue-voice-controls { grid-column: 1 / -1; }
+.dialogue-nameplate { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.dialogue-nameplate h2 { margin: 0; border-bottom: 4px double #b57b43; padding: 0 4px 4px; font-size: 1.75rem; font-weight: 500; letter-spacing: 0; }
+.dialogue-text { min-height: 3.9em; margin: 0; color: inherit; font: inherit; }
+.dialogue-word[data-speaking="true"] { background: #e8c983; box-shadow: 0 2px 0 #8c592f; }
+.dialogue-voice-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.dialogue-replay { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px; border: 0; color: #6e5037; background: transparent; font: inherit; font-size: 1rem; white-space: nowrap; cursor: pointer; }
+.dialogue-replay--playback { display: inline-grid; }
+.dialogue-replay--playback > span, .dialogue-replay--playback::after { grid-area: 1 / 1; }
+.dialogue-replay--playback::after { content: attr(data-reserved-label); visibility: hidden; }
+.dialogue-replay:hover:not(:disabled), .dialogue-replay:focus-visible { color: #39291f; background: #e8c983; }
+.dialogue-replay:focus-visible { outline: 2px solid #8c592f; outline-offset: -2px; }
+.dialogue-replay:disabled { opacity: .55; cursor: default; }
+.dialogue-voice-status { color: #6e5037; font-size: 1rem; }
+.dialogue-choices { display: grid; gap: 4px; border-top: 4px double #b57b43; padding-top: 8px; }
+.dialogue-choice, .dialogue-advance { display: flex; min-width: 0; min-height: 44px; align-items: center; gap: 8px; border: 0; padding: 8px; cursor: pointer; color: inherit; background: transparent; font: inherit; text-align: left; }
+.dialogue-choice > span { min-width: 0; }
+.dialogue-advance { justify-self: end; }
+.dialogue-advance > .game-ui-icon { rotate: 90deg; }
+.dialogue-advance:focus, .dialogue-choice:focus { outline: 2px solid #8c592f; outline-offset: -2px; color: #39291f; background: #e8c983; }
+.dialogue-choice:disabled, .dialogue-advance:disabled { cursor: wait; opacity: .6; }
+.menu-cursor { visibility: hidden; }
+.dialogue-choice:focus .menu-cursor { visibility: visible; }
+.dialogue-page-number { color: #6e5037; font-size: 1rem; font-variant-numeric: tabular-nums; text-align: right; }
+.character-portrait { position: relative; display: block; width: 128px; height: 128px; flex: none; overflow: hidden; background: #f6e5b7; }
+.smith-portrait { background: #f6e5b7 url('/assets/farm/smith.png') -64px -48px / 256px 256px no-repeat; image-rendering: pixelated; }
+.librarian-portrait { background: #f6e5b7 url('/assets/farm/old-man.png') -48px -48px / 256px 256px no-repeat; image-rendering: pixelated; }
+.housekeeper-portrait { background: #f6e5b7 url('/assets/farm/girl2.png') -64px -48px / 256px 256px no-repeat; image-rendering: pixelated; }
+.dog-portrait { background: #f6e5b7 url('/assets/farm/dog.png') 0 -120px / 128px 256px no-repeat; image-rendering: pixelated; }
+.angler-portrait { background: #f6e5b7 url('/assets/farm/angler.png') -64px -24px / 256px 256px no-repeat; image-rendering: pixelated; }
+.gardener-portrait { background: #f6e5b7 url('/assets/farm/girl1-basket.png') -64px -48px / 256px 256px no-repeat; image-rendering: pixelated; }
+.npc-quest-count { padding: 0 6px; border: 2px solid #39291f; background: #c4533a; color: #fff6d8; font-size: 1rem; line-height: 1.4; }
+@container dialogue (max-width: 12em) {
+  .dialogue-page--character > .character-portrait { grid-column: 1 / -1; grid-row: auto; }
+  .dialogue-page--character > .dialogue-nameplate { grid-column: 1 / -1; }
+}
+@media (max-width: 480px), (max-height: 500px) and (orientation: landscape) {
+  .npc-dialogue { padding: 4px 8px; font-size: 1.25rem; }
+  .dialogue-nameplate h2 { font-size: 1.5rem; }
+  .dialogue-page { gap: 8px; }
+  .dialogue-page--character { grid-template-columns: 64px minmax(0, 1fr); }
+  .dialogue-page--character > .character-portrait { grid-row: 1; }
+  .dialogue-page--character > .dialogue-text { grid-column: 1 / -1; }
+  .character-portrait { width: 64px; height: 64px; }
+  .smith-portrait { background-position: -32px -24px; background-size: 128px 128px; }
+  .librarian-portrait { background-position: -24px -24px; background-size: 128px 128px; }
+  .housekeeper-portrait { background-position: -32px -24px; background-size: 128px 128px; }
+  .dog-portrait { background-position: 0 -60px; background-size: 64px 128px; }
+  .angler-portrait { background-position: -32px -12px; background-size: 128px 128px; }
+  .gardener-portrait { background-position: -32px -24px; background-size: 128px 128px; }
+}
+@media (max-width: 700px) { .npc-dialogue { max-height: calc(100% - 8px); } }

@@ -1,0 +1,229 @@
+{
+  "artist": "antarcticbees",
+  "assets": [
+    {
+      "file": "farm-spring.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "tilesets/farm_spring_summer.png",
+      "width": 1200,
+      "height": 720,
+      "sha256": "4aeaaf0265fe41dc19dc04f77cbf333f78bba8538ff471df77ac7a6e9cd09a12"
+    },
+    {
+      "file": "farm-autumn.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "tilesets/farm_autumn.png",
+      "width": 1152,
+      "height": 736,
+      "sha256": "263401c9a2b0f5b4c33dfdfc90c2167f7413ee0c05ad1f013163c341380b0f5a"
+    },
+    {
+      "file": "farm-winter.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "tilesets/farm_winter.png",
+      "width": 1152,
+      "height": 688,
+      "sha256": "5a5e7c7ba6ba3f8bb280dc37304f3afb1f09877d56ee71dc814c75a52e92c5c4"
+    },
+    {
+      "file": "crops.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "tilesets/crops.png",
+      "width": 256,
+      "height": 224,
+      "sha256": "b7dcc97e588ec0243e559e7309e9f1b324a0a0b968c49866981b222f88eb44cc"
+    },
+    {
+      "file": "windmill-spring.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "windmill animations/windmill_spring_summerSheet.png",
+      "width": 384,
+      "height": 128,
+      "sha256": "1c7fa150ed3e1586a5721fece0fcfe4ec17dd4679f9309b3bd21fd4f1efb04e7"
+    },
+    {
+      "file": "windmill-autumn.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "windmill animations/windmill_autumn-Sheet.png",
+      "width": 384,
+      "height": 128,
+      "sha256": "301506435acc26c4039f8fc0b0b0a8dce438048719eef4949c05f136af85cfdb"
+    },
+    {
+      "file": "windmill-winter.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "windmill animations/windmill_winter-Sheet.png",
+      "width": 384,
+      "height": 128,
+      "sha256": "e41d3e0c9d500eb041389175637fedc5d8d37760c2239e6f1eb30dc2436c0321"
+    },
+    {
+      "file": "gate.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "fence gate animations/gate_spring_summer_autumn-Sheet.png",
+      "width": 64,
+      "height": 16,
+      "sha256": "2917080cbf941ff6f869d2a2d09527ecdd2913e1fe331d994cb09caa82c24d0d"
+    },
+    {
+      "file": "gate-winter.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "fence gate animations/gate_winter-Sheet.png",
+      "width": 64,
+      "height": 16,
+      "sha256": "3f364abef146c589e91d41e0925ad948ae54efd866e3933e2a10b6d954be2140"
+    },
+    {
+      "file": "farmer-idle-down.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "farmer/standing idle/character_idle_down.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "562b830c9a5ed0a17f78c9396bbe1648a5d54c04c638b973a01bf01024e295c9"
+    },
+    {
+      "file": "farmer-idle-up.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "farmer/standing idle/character_idle_up.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "3d3513f76237289ea3af7a39f20e53d2ce8e224a9748b7d5bf424293a6b4cdcb"
+    },
+    {
+      "file": "farmer-idle-left.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "farmer/standing idle/character_idle_left.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "7de6eb20fa808ac3204cde4805c87052f68797e9400d0c9919a3d93560bec666"
+    },
+    {
+      "file": "farmer-idle-right.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "farmer/standing idle/character_idle_right.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "b1d8931faee8b94f7732cb74f2059db9c5a4ae5e66153078cf0108000392593b"
+    },
+    {
+      "file": "farmer-walk-down.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "farmer/walk/character_walk_down-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "sha256": "795924564d31525ca30d1c69d5f6176849b39934989d5baf53b45035d7580448"
+    },
+    {
+      "file": "farmer-walk-up.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "farmer/walk/character_walk_up-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "sha256": "dde5a07c2610dbe6241ea7ce425378ed3aa6c18097e30f6d05f8095bb1f697d9"
+    },
+    {
+      "file": "farmer-walk-left.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "farmer/walk/character_walk_left-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "sha256": "dc6cdf59a02c1a528da96151c23f864f90bcce370cd799835a9456913dfa14ce"
+    },
+    {
+      "file": "farmer-walk-right.png",
+      "archive": "FULL VERSION Farm - 4 Seasons 16x16 Tileset by antarcticbees.zip",
+      "entry": "farmer/walk/character_walk_right-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "sha256": "7584143a9399f61d2e5fdea1e586cd854f50dda8109dd68ed76cf4c0d285b045"
+    },
+    {
+      "file": "angler.png",
+      "archive": "FULL VERSION NPC - Characters by antarcticbees.zip",
+      "entry": "idle/angler_idle.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "220d97b5e65c84e0c8cfba92eb0b3e47bdcf81def4de5565cd08a2d2b4db80ef"
+    },
+    {
+      "file": "dog.png",
+      "archive": "FULL VERSION NPC - Characters by antarcticbees.zip",
+      "entry": "idle/dog_idle.png",
+      "width": 16,
+      "height": 32,
+      "sha256": "a2adf9e83b7fded0e54e96fc1054b135771416f474886bc59dcab43ffcff9c56"
+    },
+    {
+      "file": "girl1-basket.png",
+      "archive": "FULL VERSION NPC - Characters by antarcticbees.zip",
+      "entry": "idle/girl1_idle_with_basket.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "cca387a427d510e8a1e52baf4a39646406ae81ca1f64aab0fdd471b006c66ce2"
+    },
+    {
+      "file": "girl2.png",
+      "archive": "FULL VERSION NPC - Characters by antarcticbees.zip",
+      "entry": "idle/girl2_idle.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "a5e0926de7c68390e08edfde2a6c24243e72a0ed2130a3c8912534daeec9d8c0"
+    },
+    {
+      "file": "old-man.png",
+      "archive": "FULL VERSION NPC - Characters by antarcticbees.zip",
+      "entry": "idle/old_man_idle.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "8695b2c427cf8a29a6ce527b320917ed8d4e8050b18d63c2244daaa3852c702e"
+    },
+    {
+      "file": "smith.png",
+      "archive": "FULL VERSION NPC - Characters by antarcticbees.zip",
+      "entry": "idle/smith_idle.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "bbc27d094e8e7a82b08af3c9d94747c215a70cce4e2cd252a3104b091a63973f"
+    },
+    {
+      "file": "angler-fishing-left.png",
+      "archive": "FULL VERSION NPC - Characters by antarcticbees.zip",
+      "entry": "other/spritesheet format/angler_fishing_left-Sheet.png",
+      "width": 320,
+      "height": 32,
+      "sha256": "2c555a1d815175fa18bc2d558a903d949f76a21567306ca940ff5ac66aac3bd3"
+    },
+    {
+      "file": "smith-anvil.png",
+      "archive": "FULL VERSION NPC - Characters by antarcticbees.zip",
+      "entry": "other/spritesheet format/smith_anvil-Sheet.png",
+      "width": 160,
+      "height": 32,
+      "sha256": "0b705467b1c7ed95a91d91848e25a6ac8da7c1f287b364ef73662a99160ae7d7"
+    },
+    {
+      "file": "old-man-cane.png",
+      "archive": "FULL VERSION NPC - Characters by antarcticbees.zip",
+      "entry": "other/spritesheet format/old_man_cane_tap-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "sha256": "4bfff907c745003803dd667287850666ba9c0eafa3ce7f02b20b136c212033b1"
+    },
+    {
+      "file": "butterfly.png",
+      "archive": "FULL VERSION NPC - Characters by antarcticbees.zip",
+      "entry": "other/spritesheet format/girl2_butterfly-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "sha256": "00fe9563e4b0a540ac7ba71d79afe119077db199189070f3291de1ec96c6616c"
+    },
+    {
+      "file": "dog-tail.png",
+      "archive": "FULL VERSION NPC - Characters by antarcticbees.zip",
+      "entry": "other/spritesheet format/dog_tail-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "sha256": "903706c33a29cb8fa5d049b7115255efa38bd3560aa84ecf6d2ede827a21a5d1"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+.audit/
+.env*
+.git/
+.convex/
+node_modules/
+dist/
+*.log

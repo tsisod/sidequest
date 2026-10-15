@@ -1,0 +1,40 @@
+.wake-alarm-control { --wake-cream: #fff4dd; --wake-surface: #fffbef; --wake-ink: #54452f; --wake-muted: #7c6d51; --wake-line: #dac9a4; --wake-green: #5d793e; --wake-light: #e7edcf; --wake-gold: #ae7c35; --wake-red: #964b37; font: 14px/1.5 'Manrope', sans-serif; color: var(--wake-ink); pointer-events: auto; }
+.wake-alarm-control *, .wake-alarm-control *::before, .wake-alarm-control *::after { box-sizing: border-box; }
+.wake-alarm-control h2, .wake-alarm-control h3, .wake-alarm-control p { margin: 0; }
+.wake-alarm-control button, .wake-alarm-control select, .wake-alarm-control input { font: inherit; }
+.wake-alarm-control button { cursor: pointer; }
+.wake-alarm-control button:disabled { cursor: default; opacity: .6; }
+.wake-alarm-control button:focus-visible, .wake-alarm-control input:focus-visible, .wake-alarm-control select:focus-visible { outline: 3px solid #5f8048; outline-offset: 4px; }
+.wake-dialog { width: min(480px, calc(100vw - 28px)); max-height: calc(100dvh - 32px); overflow: auto; padding: 25px; border: 2px solid #685438; border-radius: 16px; background: var(--wake-surface); color: var(--wake-ink); box-shadow: 0 6px 0 #493d2b2b, 0 30px 90px #172b2255; font: 14px/1.5 'Manrope', sans-serif; }
+.wake-dialog::backdrop { background: #203828a6; backdrop-filter: blur(4px); }
+.wake-alarm-time { display: flex; align-items: baseline; gap: 14px; }
+.wake-alarm-time > strong { font-size: 34px; font-weight: 650; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.wake-alarm-time > span { font-size: 13px; color: var(--wake-muted); }
+.wake-description { margin-top: 12px !important; font-size: 14px; color: var(--wake-muted); line-height: 1.75; text-wrap: pretty; }
+.wake-audio-readiness { display: flex; gap: 8px; align-items: center; font-size: 12px; padding: 11px 12px; margin-top: 20px; background: #f5e8ce; border-radius: 9px; color: #86612d; }
+.wake-audio-ready { color: #526c38; background: var(--wake-light); }
+.wake-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 10px 15px; border-radius: 10px; border: 1px solid #6d824d; background: var(--wake-light); color: var(--wake-green); font-size: 13px !important; font-weight: 650 !important; }
+.wake-button-primary { background: var(--wake-green); color: #fffbe9; border-color: var(--wake-green); }
+.wake-settings > .wake-button { width: 100%; margin-top: 11px; }
+.wake-button-primary:hover:not(:disabled) { background: #4b6932; }
+.wake-sounds { padding: 0; margin: 24px 0 0; border: 0; }
+.wake-sounds legend { padding: 0 0 10px; font-size: 13px; font-weight: 650; }
+.wake-sound-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 53px; border-top: 1px solid var(--wake-line); }
+.wake-sound-row > label { display: flex; align-items: center; gap: 10px; min-height: 48px; flex: 1; font-size: 13px; cursor: pointer; }
+.wake-sound-row input, .wake-screen-toggle input { accent-color: var(--wake-green); width: 17px; height: 17px; margin: 0; }
+.wake-preview-button, .wake-stop-preview { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; border: 0; background: transparent; color: var(--wake-green); padding: 0 7px; font-size: 12px !important; font-weight: 600 !important; }
+.wake-stop-preview { padding-inline: 0; }
+.wake-screen-toggle { display: flex; align-items: center; gap: 10px; min-height: 48px; border-top: 1px solid var(--wake-line); margin-top: 15px; padding-top: 12px; font-size: 13px; cursor: pointer; }
+.wake-screen-status { margin-top: 5px !important; color: var(--wake-muted); font-size: 12px; line-height: 1.7; }
+.wake-page-requirement { margin-top: 18px !important; color: var(--wake-muted); font-size: 12px; line-height: 1.75; }
+.wake-error { margin-top: 15px !important; padding: 10px 12px; color: var(--wake-red); background: #f9e4d8; border-radius: 8px; font-size: 13px; line-height: 1.65; }
+.wake-retry { margin-top: 12px; width: 100%; }
+@media (prefers-reduced-motion: reduce) { .wake-alarm-control *, .wake-alarm-control *::before, .wake-alarm-control *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+
+.wake-alarm-control { --wake-cream: #f6e5b7; --wake-surface: #f6e5b7; --wake-ink: #39291f; --wake-muted: #6e5037; --wake-line: #d9b77d; }
+
+.wake-audio-readiness, .wake-error { border-radius: 0; }
+.wake-button { border: 2px solid #8c592f; border-radius: 0; color: #39291f; background: #e8c983; box-shadow: inset 2px 2px #fff0c7, inset -2px -2px #bb8a4c; }
+.wake-button-primary { background: #e8c983; color: #39291f; border-color: #8c592f; }
+.wake-button-primary:hover:not(:disabled) { background: #f3d693; }
+.wake-preview-button, .wake-stop-preview { color: #425c2e; }

@@ -1,0 +1,46 @@
+.child-app, .wake-alarm-control {
+  --scroll-track: #ead7a6;
+  --scroll-thumb: #c9a46a;
+  --scroll-thumb-hover: #b48a4c;
+  --scroll-radius: 0;
+  --game-ui-ink: #39291f;
+  --game-ui-muted: #6e5037;
+  --game-ui-parchment: #f6e5b7;
+  --game-ui-line: #d9b77d;
+  --game-ui-frame: url('/assets/learnspace-ui/window-frame.svg');
+}
+.game-ui-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; vertical-align: middle; color: inherit; line-height: 0; }
+.game-ui-icon > svg.game-icon { display: block; width: 100%; height: 100%; border: 0; margin: 0; padding: 0; background: transparent; box-shadow: none; color: inherit; fill: currentColor; shape-rendering: crispEdges; overflow: visible; }
+.game-ui-icon .game-icon__shadow { fill: #39291f; opacity: .18; }
+.game-ui-icon > img { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(1px 1px 0 #39291f); }
+.child-app :is(.game-panel, .world-dpad button, .world-jump, .child-message, .world-error) {
+  border: 8px solid transparent;
+  border-image: var(--game-ui-frame) 8 fill / 8px / 0 stretch;
+  border-radius: 0;
+  background: var(--game-ui-parchment) padding-box;
+  color: var(--game-ui-ink);
+  box-shadow: 2px 2px 0 rgb(0 0 0 / 35%);
+}
+.child-app :is(.child-journal-dialog, .game-menu), .wake-alarm-control .wake-dialog {
+  border: 16px solid transparent;
+  border-image: url('/assets/learnspace-ui/window-frame.svg') 8 fill / 16px / 0 stretch;
+  border-radius: 0;
+  background: #f6e5b7 padding-box;
+  color: #39291f;
+  box-shadow: 4px 4px 0 rgb(0 0 0 / 40%);
+}
+.child-app button:focus-visible, .wake-alarm-control button:focus-visible, .wake-alarm-control input:focus-visible, .wake-alarm-control select:focus-visible {
+  outline: 2px solid #39291f;
+  outline-offset: -5px;
+}
+.child-app button.game-panel:hover:not(:disabled), .child-app .world-dpad button:hover:not(:disabled), .child-app .world-jump:hover:not(:disabled) { filter: brightness(1.035); }
+.child-app button.game-panel:active:not(:disabled), .child-app .world-dpad button:active:not(:disabled), .child-app .world-jump:active:not(:disabled) { translate: 1px 1px; }
+@media (prefers-reduced-motion: reduce) { .child-app button.game-panel:active:not(:disabled), .child-app .world-dpad button:active:not(:disabled), .child-app .world-jump:active:not(:disabled) { translate: none; } }
+.child-app ::-webkit-scrollbar-thumb { border: 2px solid #8c592f; box-shadow: inset 2px 2px #e8c983, inset -2px -2px #9c7440; }
+.child-app ::-webkit-scrollbar-track { box-shadow: inset 2px 0 #d9b77d; }
+@keyframes game-pop { from { opacity: 0; transform: translateY(8px) scale(.97); } }
+@keyframes game-fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  .child-app dialog[open] { animation: game-pop 160ms cubic-bezier(0, 0, .2, 1); }
+  .child-app dialog[open]::backdrop { animation: game-fade 160ms ease-out; }
+}

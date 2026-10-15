@@ -1,0 +1,49 @@
+@import './fonts.css';
+
+:root { --scroll-track: #eef1e8; --scroll-thumb: #a3ad9f; --scroll-thumb-hover: #6f7a6f; --scroll-radius: 8px; }
+@supports not selector(::-webkit-scrollbar) { * { scrollbar-color: var(--scroll-thumb) var(--scroll-track); } }
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: var(--scroll-track); }
+::-webkit-scrollbar-thumb { min-height: 32px; border: 3px solid var(--scroll-track); border-radius: var(--scroll-radius); background: var(--scroll-thumb); }
+::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); }
+:root { --surface: #f7f8f3; --ink: #24352b; --forest: #284b37; --muted: #7a847a; --line: #e6e9e0; font-family: 'Manrope', sans-serif; color: var(--ink); background: var(--surface); font-synthesis: none; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+* { box-sizing: border-box; }
+html, body, #root { min-height: 100%; }
+body { margin: 0; min-width: 340px; }
+button, input, select, textarea { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+button { cursor: pointer; }
+button:disabled { cursor: default; opacity: .5; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #88ab64; outline-offset: 4px; }
+svg { flex-shrink: 0; vertical-align: middle; }
+h1,h2,h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
+a { color: inherit; }
+::selection { background: #d5e7bd; color: #243c25; }
+.pixel-font { font-family: 'Pixelify Sans', monospace; }
+.button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 48px; padding: 12px 20px; border: 0; border-radius: 12px; font-size: 13px; font-weight: 650; line-height: 1.5; text-decoration: none; transition: background-color 150ms, color 150ms, transform 150ms; }
+.button:active:not(:disabled) { transform: scale(.96); }
+.button-primary { background: #294e37; color: #faffef; }
+.button-primary:hover:not(:disabled) { background: #3d6342; }
+.button-secondary { background: #e8eee1; color: #46613b; }
+.button-secondary:hover:not(:disabled) { background: #dce7d1; }
+.icon-button { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 0; border-radius: 10px; padding: 0; background: transparent; color: inherit; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.dialog-shell { width: min(500px, calc(100% - 32px)); border: 0; padding: 28px; border-radius: 22px; background: #fcfcf8; color: var(--ink); max-height: calc(100svh - 40px); overflow-y: auto; box-shadow: 0 25px 100px #14281533; }
+.dialog-shell::backdrop { background: #1e33266b; backdrop-filter: blur(5px); }
+.connection-screen { display: flex; min-height: 100svh; align-items: center; justify-content: center; flex-direction: column; gap: 20px; padding: 24px; background: #ffffff; }
+.connection-screen > h1 { font: 500 28px 'Pixelify Sans', monospace; }
+.connection-mark { color: #34583b; }
+.connection-card { width: min(440px,100%); padding: 32px; background: #ffffff; border: 1px solid #e2e5df; border-radius: 16px; box-shadow: 0 6px 24px rgb(0 0 0 / 8%); }
+.connection-brand { display: flex; align-items: center; gap: 9px; width: fit-content; text-decoration: none; font-size: 25px; font-weight: 800; letter-spacing: -1px; }
+.connection-brand svg { color: #6f8d4c; }
+.connection-card h1 { font: 500 34px/1.15 'Pixelify Sans', monospace; margin: 28px 0 10px; letter-spacing: -.5px; }
+.connection-card p { color: #626e66; font-size: 15px; line-height: 1.6; margin: 0 0 24px; }
+.connection-card form { display: grid; gap: 12px; }
+.connection-card label { font-size: 13px; font-weight: 650; }
+.connection-card input { min-height: 52px; width: 100%; border: 1px solid #7c8c7e; background: #ffffff; color: #292f2c; border-radius: 10px; padding: 12px 14px; letter-spacing: 2px; font-size: 17px; }
+.connection-card input:focus-visible { outline: none; border-color: #292f2c; box-shadow: 0 0 0 1px #292f2c; }
+.connection-card .button { min-height: 52px; border-radius: 10px; font-size: 15px; }
+.connection-card .connection-error { color: #a94738; margin: 0; padding: 12px 14px; border-radius: 10px; background: #fae8e3; }
+.connection-parent { min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px; font-size: 12px; text-decoration: none; color: #789164; }
+@media (prefers-reduced-motion: reduce) { *,*::before,*::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }

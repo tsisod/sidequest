@@ -6,8 +6,14 @@ import { parseAlarmTime } from './wakeAlarm.ts'
 export const MAX_VOICE_TURNS = 16
 export const MAX_VOICE_TEXT = 600
 export type VoiceTurn = { role: 'parent' | 'assistant'; text: string }
-export type VoiceReply = { ok: true; reply: string; changes: string[] } | { ok: false; message: string }
-export type AskVoice = (turns: VoiceTurn[]) => Promise<VoiceReply>
+export const MAX_VOICE_CLIP_BYTES = 2_000_000
+/** `heard` is what the parent said (typed, or transcribed from their recording); it is empty when the recording held no words. */
+export type VoiceReply = { ok: true; heard: string; reply: string; changes: string[] } | { ok: false; message: string }
+export type VoiceClip = { audio: ArrayBuffer; mimeType: string; language: string }
+export type VoiceApi = {
+  ask: (turns: VoiceTurn[]) => Promise<VoiceReply>
+  listen: (clip: VoiceClip, earlier: VoiceTurn[]) => Promise<VoiceReply>
+}
 
 /** A conversation must start and end with the parent speaking, so there is always something to answer. */
 export function parseVoiceTurns(value: unknown): VoiceTurn[] | null {

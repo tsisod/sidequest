@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ConvexClient } from 'convex/browser'
 import { makeFunctionReference } from 'convex/server'
 import type { ActionResult, ConnectionState, Family, FamilyCommand, FamilyConnection, Role } from '../../shared/domain.ts'
 import type { Speak, SpeechResult, Voice } from '../../shared/speech.ts'
 import type { AskSpark, SparkAlert, SparkInboxChange, SparkReply, SparkTurn } from '../../shared/spark.ts'
-import type { AskVoice, VoiceTurn, VoiceReply } from '../../shared/parentVoice.ts'
+import type { VoiceApi, VoiceTurn, VoiceReply } from '../../shared/parentVoice.ts'
 import { parseTimeZone } from '../../shared/calendar.ts'
 import { parseFamily } from '../../shared/sidequest.ts'
 import { claimParentCredentials, executeLocal, LOCAL_NOTICE, randomToken, readLocalFamily } from './localStore.ts'
@@ -27,6 +27,7 @@ const inboxRef = makeFunctionReference<'query', { token: string }, SparkAlert[] 
 const editInboxRef = makeFunctionReference<'mutation', { token: string; change: SparkInboxChange }, ActionResult>('spark:editInbox')
 const askRef = makeFunctionReference<'action', { token: string; name: string; keybinds: Record<string, string>; turns: SparkTurn[] }, SparkReply>('spark:ask')
 const voiceRef = makeFunctionReference<'action', { token: string; turns: VoiceTurn[] }, VoiceReply>('voice:command')
+const listenRef = makeFunctionReference<'action', { token: string; audio: ArrayBuffer; mimeType: string; language: string; earlier: VoiceTurn[] }, VoiceReply>('voice:listen')
 const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'Sidequest could not connect. Please try again.'
 const credentialKey = (role: Role) => `sidequest-hosted:${hostedUrl}:${role}`
 
@@ -260,11 +261,17 @@ export function useSidequest(role: Role): FamilyConnection {
     catch (error) { return { ok: false, message: errorMessage(error) } }
   }, [mode, role])
 
-  const voice: AskVoice = useCallback(async turns => {
-    const saved = credentials.current
-    if (mode === 'local' || role !== 'parent' || !saved) return { ok: false, message: 'Voice commands need a hosted family connection.' }
-    try { return await getClient().action(voiceRef, { token: saved.token, turns }) }
-    catch (error) { return { ok: false, message: errorMessage(error) } }
+  const voice: VoiceApi = useMemo(() => {
+    const call = async (run: (token: string) => Promise<VoiceReply>): Promise<VoiceReply> => {
+      const saved = credentials.current
+      if (mode === 'local' || role !== 'parent' || !saved) return { ok: false, message: 'Voice commands need a hosted family connection.' }
+      try { return await run(saved.token) }
+      catch (error) { return { ok: false, message: errorMessage(error) } }
+    }
+    return {
+      ask: turns => call(token => getClient().action(voiceRef, { token, turns })),
+      listen: ({ audio, mimeType, language }, earlier) => call(token => getClient().action(listenRef, { token, audio, mimeType, language, earlier })),
+    }
   }, [mode, role])
 
   return { mode, state, execute, speak, ask, inbox, editInbox, voice, join, create }

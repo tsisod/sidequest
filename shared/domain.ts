@@ -1,6 +1,6 @@
 import type { AskSpark, SparkAlert, SparkInboxChange } from './spark.ts'
 import type { Speak } from './speech.ts'
-import type { AskVoice } from './parentVoice.ts'
+import type { VoiceApi } from './parentVoice.ts'
 
 export type Role = 'parent' | 'child'
 export type Place = 'library' | 'cottage' | 'chores'
@@ -116,7 +116,7 @@ export type FamilyConnection = {
   ask: AskSpark
   inbox: SparkAlert[] | null
   editInbox: (change: SparkInboxChange) => Promise<ActionResult>
-  voice: AskVoice
+  voice: VoiceApi
   join: (code: string) => Promise<ActionResult>
   create: () => Promise<ActionResult>
 }

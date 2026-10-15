@@ -6,7 +6,7 @@ import { projectDay, remainingMs, screenUnlocked } from '../../shared/sidequest'
 import { routes } from '../routes'
 import type { ParentView } from '../routes'
 import type { SparkAlert, SparkInboxChange } from '../../shared/spark'
-import type { AskVoice } from '../../shared/parentVoice'
+import type { VoiceApi } from '../../shared/parentVoice'
 import VoiceAssistant from './VoiceAssistant'
 import ParentInbox from './ParentInbox'
 import Icon from '../components/Icon'
@@ -26,7 +26,7 @@ type ParentDashboardProps = {
   view: ParentView
   inbox: SparkAlert[] | null
   onEditInbox: (change: SparkInboxChange) => Promise<ActionResult>
-  onVoice: AskVoice
+  onVoice: VoiceApi
 }
 type DialogKind = 'add' | 'screen-time' | 'pair' | 'rename' | 'retire' | null
 type Filter = 'day' | 'pending' | 'approved'
@@ -293,7 +293,7 @@ export default function ParentDashboard({ family, now, mode, onCommand, onOpenGa
         </section>
       </>}</main>
     </div>
-    {voiceOpen && <VoiceAssistant childName={family.childName} onAsk={onVoice} onClose={() => setVoiceOpen(false)} />}
+    {voiceOpen && <VoiceAssistant childName={family.childName} voice={onVoice} onClose={() => setVoiceOpen(false)} />}
     <dialog className="dialog-shell p-dialog" ref={dialogRef} aria-labelledby="parent-dialog-title" onClose={() => setDialog(null)} onCancel={event => { if (busy) event.preventDefault(); else setDialog(null) }} onClick={event => { if (event.target === event.currentTarget && !busy) setDialog(null) }}>
       <div className="p-dialog-heading"><button className="icon-button" type="button" aria-label="Close dialog" disabled={busy} onClick={() => setDialog(null)}><Icon name="close" size={18} /></button><h2 id="parent-dialog-title">{dialogTitle}</h2></div>
       {dialog === 'add' && <form onSubmit={event => { void submitQuest(event) }}><label className="p-field">Quest title<input autoFocus required maxLength={80} placeholder="Read for 20 minutes" value={title} onChange={event => setTitle(event.target.value)} disabled={busy} /></label><div className="p-form-row"><label className="p-field">Repeat<select value={repeat} onChange={event => { if (isRepeat(event.target.value)) setRepeat(event.target.value) }} disabled={busy}><option value="once">Once</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select></label><label className="p-field">{repeat === 'once' ? 'Due on' : 'Starts on'}<input type="date" required min={today} value={dateInput} onChange={event => setDateInput(event.target.value)} disabled={busy} /></label></div>{repeat === 'weekly' && <fieldset className="p-weekday-field"><legend>Repeat on</legend><div>{weekdays.map(day => <button key={day.value} type="button" aria-label={day.label} aria-pressed={chosenDays.includes(day.value)} className={chosenDays.includes(day.value) ? 'p-weekday p-weekday-selected' : 'p-weekday'} disabled={busy} onClick={() => setChosenDays(current => current.includes(day.value) ? current.filter(value => value !== day.value) : [...current, day.value])}>{day.short}</button>)}</div></fieldset>}<p className="p-schedule-preview">{schedulePreview}</p><div className="p-form-row"><label className="p-field">XP reward<input required type="number" min={1} max={500} step={1} value={xpReward} onChange={event => setXpReward(event.target.value)} disabled={busy} /></label><label className="p-field">Gold reward<input required type="number" min={1} max={100} step={1} value={goldReward} onChange={event => setGoldReward(event.target.value)} disabled={busy} /></label></div><label className="p-field">Place<select value={place} onChange={event => { if (isPlace(event.target.value)) setPlace(event.target.value) }} disabled={busy}>{places.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label><p className="p-date-zone">Dates use {family.timeZone}.</p>{error && <p className="p-dialog-error" role="alert">{error}</p>}<div className="p-dialog-actions"><button className="button button-secondary" type="button" disabled={busy} onClick={() => setDialog(null)}>Cancel</button><button className="button button-primary" type="submit" disabled={busy}>{busy ? 'Adding…' : repeat === 'once' ? 'Add quest' : 'Add repeating quest'}<Icon name="plus" size={17} /></button></div></form>}

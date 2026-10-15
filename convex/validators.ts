@@ -16,7 +16,7 @@ export const scheduleValidator = v.union(
 const template = v.object({ ...baseQuest, schedule: scheduleValidator, endsBefore: v.union(v.string(), v.null()) })
 const quest = progress({ ...baseQuest, templateId: v.string(), date: v.string() })
 const wakeSound = v.union(v.literal('classic'), v.literal('chimes'), v.literal('birds'))
-const wakeGame = v.union(v.literal('moles'), v.literal('memory'), v.literal('numbers'))
+const wakeGame = v.union(v.literal('moles'), v.literal('memory'))
 const wakeStage = v.union(v.literal('first'), v.literal('check'))
 const wakeProgress = v.union(
   v.object({ kind: v.literal('unstarted') }),

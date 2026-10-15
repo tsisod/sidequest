@@ -4,12 +4,12 @@ import { seasonArt } from '../game/farmArt'
 import type { Crop } from '../game/farmArt'
 import type { Daylight, Season } from '../game/sky'
 import Icon from '../game/GameIcon'
-import { alarmClock, coin, sun } from './pixelArt'
-import { Pixels } from './Pixels'
+import { alarmClock } from '../components/pixelArt'
+import { Pixels } from '../components/Pixels'
+import type { Reward } from '../components/RewardCelebration'
 import './wakeScene.css'
 
 type Vars = CSSProperties & Record<`--${string}`, string | number>
-export type WakeReward = { xp: number; gold: number }
 
 const fieldColour: Record<Season, string> = { spring: '#7da64e', summer: '#77a04a', autumn: '#a08e4c', winter: '#dfe8ec' }
 const FIELD_TILES = 12
@@ -65,7 +65,7 @@ export function WakeScene({ season, daylight, children }: { season: Season; dayl
 
 function signed(value: number): string { return value > 0 ? `+${value}` : String(value) }
 
-export function WakeHud({ reward, ringing, done, total }: { reward: WakeReward | null; ringing: boolean; done: number; total: number }) {
+export function WakeHud({ reward, ringing, done, total }: { reward: Reward | null; ringing: boolean; done: number; total: number }) {
   return <header className="wake-hud">
     <div className="wake-panel wake-hud-reward" role="img" aria-label={reward ? `Wake up now for ${reward.xp} XP and ${reward.gold} gold` : 'Wake-up check'}>
       <Pixels art={alarmClock} className={ringing ? 'wake-clock wake-clock-ringing' : 'wake-clock'} />
@@ -78,38 +78,4 @@ export function WakeHud({ reward, ringing, done, total }: { reward: WakeReward |
       {Array.from({ length: total }, (_, index) => <i key={index} className={index < done ? 'wake-pip wake-pip-on' : 'wake-pip'} />)}
     </div>
   </header>
-}
-
-type BurstKind = 'stars' | 'dust' | 'leaves' | 'coins'
-const burstColours: Record<BurstKind, string[]> = {
-  stars: ['#fff4c2', '#f8c943', '#ffffff', '#f2a93b'],
-  dust: ['#e4d2a8', '#c9a46a', '#f3e7c9'],
-  leaves: ['#7fb24a', '#a7d16a', '#f8c943', '#e7849a'],
-  coins: ['#f8c943', '#f2c14e', '#fff0a8', '#c9781e'],
-}
-/** A one-shot spray of pixel particles; remount it with a new key to fire again. */
-export function Burst({ kind, count = 12, spread = 70 }: { kind: BurstKind; count?: number; spread?: number }) {
-  const [particles] = useState(() => Array.from({ length: count }, (_, index) => {
-    const angle = (index / count) * Math.PI * 2 + Math.random() * .6
-    const distance = spread * (.55 + Math.random() * .6)
-    return { dx: Math.cos(angle) * distance, dy: Math.sin(angle) * distance - (kind === 'dust' ? spread * .35 : 0), size: 3 + Math.floor(Math.random() * 3) * 2, colour: burstColours[kind][index % burstColours[kind].length], delay: Math.random() * 60 }
-  }))
-  return <span className={`wake-burst wake-burst-${kind}`} aria-hidden="true">{particles.map((particle, index) => <i key={index} style={{ '--dx': `${particle.dx.toFixed(1)}px`, '--dy': `${particle.dy.toFixed(1)}px`, '--size': `${particle.size}px`, '--colour': particle.colour, '--delay': `${particle.delay.toFixed(0)}ms` } as Vars} />)}</span>
-}
-
-const coinShower = Array.from({ length: 26 }, (_, index) => ({ left: (index * 41 + 7) % 100, delay: (index * 83) % 900, duration: 1100 + (index * 157) % 700, spin: index % 2 ? 1 : -1 }))
-
-export function WakeCelebration({ reward }: { reward: WakeReward | null }) {
-  return <div className="wake-celebration" role="status" aria-label={reward ? `Awake! ${signed(reward.xp)} XP and ${signed(reward.gold)} gold.` : 'Awake! Check-in complete.'}>
-    <div className="wake-rays" aria-hidden="true" />
-    {reward && reward.gold > 0 && <div className="wake-coin-shower" aria-hidden="true">{coinShower.map((drop, index) => <i key={index} style={{ '--left': `${drop.left}%`, '--delay': `${drop.delay}ms`, '--duration': `${drop.duration}ms`, '--spin': drop.spin } as Vars}><Pixels art={coin} /></i>)}</div>}
-    {reward ? <div className="wake-panel wake-reward-card" aria-hidden="true">
-      <Pixels art={sun} className="wake-reward-sun" />
-      <div className="wake-reward-lines">
-        <span className="wake-reward-line wake-reward-xp"><Icon name="star" size={34} /><b>{signed(reward.xp)}</b><small>XP</small></span>
-        <span className={reward.gold < 0 ? 'wake-reward-line wake-reward-gold wake-reward-loss' : 'wake-reward-line wake-reward-gold'}><Icon name="coin" size={34} /><b>{signed(reward.gold)}</b></span>
-      </div>
-      <Burst kind="stars" count={18} spread={150} />
-    </div> : <div className="wake-reward-solo" aria-hidden="true"><Pixels art={sun} className="wake-reward-sun" /><Burst kind="stars" count={18} spread={170} /></div>}
-  </div>
 }

@@ -1,5 +1,5 @@
 import type { ActionResult, DateKey, Family, FamilyCommand, Place, PlayClock, ProjectDay, Quest, Role, Schedule, TaskTemplate, TimeZone, Weekday } from './domain.ts'
-import { alarmInstant, defaultWakeAlarm, parseAlarmTime, parseWakeAlarm, parseWakeSound, wakeGameFor, wakePhase, wakeReward } from './wakeAlarm.ts'
+import { alarmInstant, defaultWakeAlarm, parseAlarmTime, parseWakeAlarm, parseWakeGame, parseWakeSound, wakePhase, wakeReward } from './wakeAlarm.ts'
 import { addDays, dateAt, nextDayBoundary, parseDateKey, parseTimeZone, weekdayOf } from './calendar.ts'
 
 const MINUTE = 60_000
@@ -51,8 +51,11 @@ export function screenUnlocked(family: Family): boolean {
   const quests = projectDay(family, family.sessionDay).quests
   return quests.length > 0 && quests.every(quest => quest.status === 'approved')
 }
-export function earnedXp(family: Family): number { return family.quests.reduce((sum, quest) => sum + (quest.status === 'approved' ? quest.xp : 0), 0) + family.wakeAlarm.results.reduce((sum, result) => sum + result.xp, 0) }
-export function earnedGold(family: Family): number { return family.quests.reduce((sum, quest) => sum + (quest.status === 'approved' ? quest.gold : 0), 0) + family.wakeAlarm.results.reduce((sum, result) => sum + result.gold, 0) }
+export function questEarnings(family: Family): { xp: number; gold: number } {
+  return family.quests.reduce((sum, quest) => quest.status === 'approved' ? { xp: sum.xp + quest.xp, gold: sum.gold + quest.gold } : sum, { xp: 0, gold: 0 })
+}
+export function earnedXp(family: Family): number { return questEarnings(family).xp + family.wakeAlarm.results.reduce((sum, result) => sum + result.xp, 0) }
+export function earnedGold(family: Family): number { return questEarnings(family).gold + family.wakeAlarm.results.reduce((sum, result) => sum + result.gold, 0) }
 /** A late wake-up can only take gold the child already has, so the balance never drops below zero. */
 export function wakeRewardFor(family: Family, scheduledAt: number, wokeAt: number): { xp: number; gold: number } {
   const reward = wakeReward(wokeAt - scheduledAt)
@@ -119,7 +122,7 @@ export function applyCommand(family: Family, command: FamilyCommand, { role, now
     case 'complete-wake-game': {
       const alarm = next.wakeAlarm
       const date = parseDateKey(command.date)
-      if (!alarm.enabled || !date || !finiteTime(command.scheduledAt) || command.game !== wakeGameFor(date, command.stage) || command.scheduledAt !== alarmInstant(date, alarm.time, next.timeZone)) return done(failure('This wake-up challenge has changed. Use the current alarm.'))
+      if (!alarm.enabled || !date || !finiteTime(command.scheduledAt) || !parseWakeGame(command.game) || command.scheduledAt !== alarmInstant(date, alarm.time, next.timeZone)) return done(failure('This wake-up challenge has changed. Use the current alarm.'))
       const today = dateAt(now, next.timeZone)
       const progress = alarm.progress
       const recordedRun = progress.kind !== 'unstarted' && progress.date === date && progress.scheduledAt === command.scheduledAt && progress.firstPassedAt <= now
@@ -127,7 +130,7 @@ export function applyCommand(family: Family, command: FamilyCommand, { role, now
       if (recordedRun && recentRun && (command.stage === 'first' || progress.kind === 'done')) return done()
       const phase = wakePhase(alarm, now, next.timeZone)
       const playable = phase.kind === 'ringing' ? phase.stage === command.stage : phase.kind === 'check' && command.stage === 'check'
-      if (!playable || phase.kind === 'off' || phase.date !== date || phase.scheduledAt !== command.scheduledAt || !('game' in phase) || phase.game !== command.game) return done(failure('This wake-up challenge is not ready. Use the current alarm and try again.'))
+      if (!playable || phase.kind === 'off' || phase.date !== date || phase.scheduledAt !== command.scheduledAt) return done(failure('This wake-up challenge is not ready. Use the current alarm and try again.'))
       if (command.stage === 'first') {
         const rewarded = alarm.results.some(result => result.date === date)
         const results = rewarded ? alarm.results : [...alarm.results, { date, scheduledAt: command.scheduledAt, wokeAt: now, ...wakeRewardFor(next, command.scheduledAt, now) }]

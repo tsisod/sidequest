@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import type { Family, FamilyCommand, WakeGameKind, WakeSound } from '../../shared/domain'
-import { addDays, dateAt, parseTimeZone } from '../../shared/calendar'
+import type { Family, FamilyCommand, WakeSound } from '../../shared/domain'
+import { parseTimeZone } from '../../shared/calendar'
 import { applyCommand, createFamily, reconcileFamily } from '../../shared/sidequest'
-import { alarmVolume, parseAlarmTime, wakeGameFor, wakePhase } from '../../shared/wakeAlarm'
+import { alarmVolume, parseAlarmTime, wakePhase } from '../../shared/wakeAlarm'
 import WakeAlarmPanel from './WakeAlarmPanel'
 import { createWakeVoice, scheduleWakeVolume } from './audio'
 
@@ -29,13 +29,10 @@ export default function AlarmLab() {
   }, [offset])
   const family = reconcileFamily(saved, now)
   const phase = wakePhase(family.wakeAlarm, now, family.timeZone)
-  function selectGame(game: WakeGameKind) {
-    let date = dateAt(BASE, family.timeZone)
-    while (wakeGameFor(date, 'first') !== game) date = addDays(date, 1)
-    const instant = Date.parse(`${date}T06:50:00Z`)
-    setOffset(instant - Date.now())
-    setNow(instant)
-    setSaved(labFamily(instant))
+  function restart() {
+    setOffset(BASE - Date.now())
+    setNow(BASE)
+    setSaved(labFamily(BASE))
   }
   async function command(action: FamilyCommand) {
     const outcome = applyCommand(saved, action, { role: action.kind === 'set-wake-alarm' ? 'parent' : 'child', now })
@@ -81,9 +78,7 @@ export default function AlarmLab() {
       <button className="button button-secondary" onClick={() => setOffset(value => value + 300_000)}>Advance five minutes</button>
       <button className="button button-secondary" onClick={() => setOffset(value => value + 60_000)}>Advance one minute</button>
       <button className="button button-secondary" onClick={() => setOffset(value => value + 86_400_000)}>Next day</button>
-      <button className="button button-secondary" onClick={() => selectGame('moles')}>Test whack-a-mole</button>
-      <button className="button button-secondary" onClick={() => selectGame('memory')}>Test memory pairs</button>
-      <button className="button button-secondary" onClick={() => selectGame('numbers')}>Test number order</button>
+      <button className="button button-secondary" onClick={restart}>Restart test</button>
       <button className="button button-secondary" onClick={() => { void checkAudio() }}>Run audio check</button>
     </div>
     <div ref={setSettingsHost} style={{ maxWidth: 480, marginTop: 24 }} /><WakeAlarmPanel family={family} now={now} onCommand={command} settingsHost={settingsHost} />

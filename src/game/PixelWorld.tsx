@@ -23,12 +23,16 @@ const seasons: readonly Season[] = ['spring', 'summer', 'autumn', 'winter']
 const preview = import.meta.env.DEV ? new URLSearchParams(window.location.search) : null
 const previewSeason = seasons.find(season => season === preview?.get('season')) ?? null
 const previewHour = preview?.has('hour') ? Number(preview.get('hour')) : null
+const SPRINT = 1.8
+// Shift turns number keys into symbols, so read the physical digit to keep number keybinds working while sprinting.
+const pressedKey = (event: KeyboardEvent) => event.shiftKey && /^Digit\d$/.test(event.code) ? event.code.slice(5) : event.key.toLowerCase()
 
 export default function PixelWorld({ canMove, now, timeZone, openQuests, keybinds, onTalk }: PixelWorldProps) {
   const map = useRef<HTMLDivElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const markers = useRef(new Map<NpcKind, HTMLButtonElement>())
   const keys = useRef(new Set<string>())
+  const sprinting = useRef(false)
   const destination = useRef<Point | null>(null)
   const jumpStartedAt = useRef<number | null>(null)
   const onTalkRef = useRef(onTalk)
@@ -89,7 +93,7 @@ export default function PixelWorld({ canMove, now, timeZone, openQuests, keybind
       const tick = (time: number) => {
         const step = Math.min((time - (last || time)) / 1000, .04) * 90
         last = time
-        if (document.hidden || document.querySelector('dialog[open]')) { keys.current.clear(); destination.current = null; jumpStartedAt.current = null }
+        if (document.hidden || document.querySelector('dialog[open]')) { keys.current.clear(); destination.current = null; jumpStartedAt.current = null; sprinting.current = false }
         if (!isJumping(jumpStartedAt.current, time)) jumpStartedAt.current = null
         let { dx, dy } = heldDirection(keybindsRef.current, keys.current)
         if (dx || dy) destination.current = null
@@ -101,9 +105,11 @@ export default function PixelWorld({ canMove, now, timeZone, openQuests, keybind
           else { dx = (target.x - previous.x) / distance; dy = (target.y - previous.y) / distance }
         }
         let moving = false
+        const sprint = sprinting.current
         if (canMoveRef.current && (dx || dy)) {
           const magnitude = Math.hypot(dx, dy)
-          const next = moveHero(previous, dx / magnitude * step, dy / magnitude * step)
+          const stride = step * (sprint ? SPRINT : 1)
+          const next = moveHero(previous, dx / magnitude * stride, dy / magnitude * stride)
           moving = next.x !== previous.x || next.y !== previous.y
           player.current.point = next
           player.current.direction = Math.abs(dx) > Math.abs(dy) ? dx > 0 ? 'right' : 'left' : dy > 0 ? 'down' : 'up'
@@ -126,7 +132,7 @@ export default function PixelWorld({ canMove, now, timeZone, openQuests, keybind
         const lift = canMoveRef.current ? jumpHeight(jumpStartedAt.current, time) : 0
         if (fx.airborne && lift === 0) { fx.landedAt = time; if (motion) fx.dust.push(...dust(hero, time, 5)) }
         fx.airborne = lift > 0
-        if (motion && moving && !fx.airborne && time - fx.lastDust > 170) { fx.dust.push(...dust(hero, time, 2)); fx.lastDust = time }
+        if (motion && moving && !fx.airborne && time - fx.lastDust > (sprint ? 80 : 170)) { fx.dust.push(...dust(hero, time, sprint ? 3 : 2)); fx.lastDust = time }
         if (motion && time - fx.lastTwinkle > (Math.hypot(spark.current.x - sparkFrom.x, spark.current.y - sparkFrom.y) > .4 ? 70 : 380)) { fx.twinkles.push(twinkle(spark.current, time)); fx.lastTwinkle = time }
         if (motion && chimney && time - fx.lastSmoke > 280) { fx.smoke.push(smoke(chimney, time)); fx.lastSmoke = time }
         fx.dust = liveParticles(fx.dust, time)
@@ -138,7 +144,7 @@ export default function PixelWorld({ canMove, now, timeZone, openQuests, keybind
         const focus = cameraFor(hero, viewWidth, viewHeight)
         camera.current = { x: focus.x, y: focus.y, scale, cssScale }
         context.setTransform(scale, 0, 0, scale, -focus.x * scale, -focus.y * scale)
-        drawFarm(context, assets, { hero, spark: spark.current, direction: player.current.direction, moving, time: reducedMotion.matches && !moving ? 0 : time, jumpHeight: lift, pose: heroPose({ time, moving, airborne: fx.airborne, landedAt: fx.landedAt, motion }), dust: fx.dust, twinkles: fx.twinkles, smoke: fx.smoke, motion, camera: camera.current, viewWidth, viewHeight, daylight })
+        drawFarm(context, assets, { hero, spark: spark.current, direction: player.current.direction, moving, sprinting: sprint && moving, time: reducedMotion.matches && !moving ? 0 : time, jumpHeight: lift, pose: heroPose({ time, moving, airborne: fx.airborne, landedAt: fx.landedAt, motion }), dust: fx.dust, twinkles: fx.twinkles, smoke: fx.smoke, motion, camera: camera.current, viewWidth, viewHeight, daylight })
         const nearby = nearestVillager(hero)
         for (const spot of talkSpots) {
           const marker = markers.current.get(spot.npc)
@@ -150,7 +156,7 @@ export default function PixelWorld({ canMove, now, timeZone, openQuests, keybind
       }
       frame = requestAnimationFrame(tick)
     }).catch(() => { if (!disposed) setError('The village art could not load. Refresh to try again.') })
-    const clear = () => { keys.current.clear(); destination.current = null; jumpStartedAt.current = null }
+    const clear = () => { keys.current.clear(); destination.current = null; jumpStartedAt.current = null; sprinting.current = false }
     window.addEventListener('blur', clear)
     document.addEventListener('visibilitychange', clear)
     return () => { disposed = true; cancelAnimationFrame(frame); observer.disconnect(); clear(); window.removeEventListener('blur', clear); document.removeEventListener('visibilitychange', clear) }
@@ -166,6 +172,7 @@ export default function PixelWorld({ canMove, now, timeZone, openQuests, keybind
         keys.current.clear()
         destination.current = null
         jumpStartedAt.current = null
+        sprinting.current = false
         return
       }
       if (event.ctrlKey || event.metaKey || event.altKey || target?.closest('form, input, select, textarea, [role="textbox"], [role="slider"], [role="spinbutton"], [contenteditable]:not([contenteditable="false"])')) {
@@ -173,9 +180,14 @@ export default function PixelWorld({ canMove, now, timeZone, openQuests, keybind
         destination.current = null
         return
       }
-      const key = event.key.toLowerCase()
+      const key = pressedKey(event)
       const action = actionFor(keybindsRef.current, key)
-      if (action === 'up' || action === 'down' || action === 'left' || action === 'right') {
+      // Shift may already be held when the game gets focus, so read its live state on every key press.
+      if (keybindsRef.current.sprint === 'shift') sprinting.current = event.shiftKey
+      if (action === 'sprint') {
+        event.preventDefault()
+        sprinting.current = true
+      } else if (action === 'up' || action === 'down' || action === 'left' || action === 'right') {
         event.preventDefault()
         map.current?.focus({ preventScroll: true })
         beginMove(key)
@@ -188,7 +200,11 @@ export default function PixelWorld({ canMove, now, timeZone, openQuests, keybind
         if (npc) { event.preventDefault(); onTalkRef.current(npc) }
       }
     }
-    const keyUp = (event: KeyboardEvent) => keys.current.delete(event.key.toLowerCase())
+    const keyUp = (event: KeyboardEvent) => {
+      if (pressedKey(event) === keybindsRef.current.sprint) sprinting.current = false
+      keys.current.delete(event.key.toLowerCase())
+      keys.current.delete(pressedKey(event))
+    }
     window.addEventListener('keydown', keyDown)
     window.addEventListener('keyup', keyUp)
     return () => {
@@ -208,14 +224,14 @@ export default function PixelWorld({ canMove, now, timeZone, openQuests, keybind
     map.current?.focus({ preventScroll: true })
   }
   return <div className="world-shell">
-    <div ref={map} className="world-map" tabIndex={0} role="group" aria-label={`Willowbrook farm. Arrow keys or ${[keybinds.up, keybinds.left, keybinds.down, keybinds.right].map(keyLabel).join(' ')} to walk, ${keyLabel(keybinds.jump)} to jump, ${keyLabel(keybinds.interact)} to talk to someone nearby, Escape for the menu.`}>
+    <div ref={map} className="world-map" tabIndex={0} role="group" aria-label={`Willowbrook farm. Arrow keys or ${[keybinds.up, keybinds.left, keybinds.down, keybinds.right].map(keyLabel).join(' ')} to walk, hold ${keyLabel(keybinds.sprint)} to sprint, ${keyLabel(keybinds.jump)} to jump, ${keyLabel(keybinds.interact)} to talk to someone nearby, Escape for the menu.`}>
       <canvas ref={canvas} className="world-art" aria-hidden="true" onPointerDown={walkTo} />
       {error && <p className="world-error" role="alert">{error}</p>}
       {talkSpots.map(({ npc }) => {
         const villager = villagers[npc]
         const left = villager.role === 'quests' ? openQuests.get(villager.place) ?? 0 : 0
         if (villager.role !== 'quests' || !left) return null
-        return <button type="button" key={npc} ref={element => { if (element) markers.current.set(npc, element); else markers.current.delete(npc) }} className="world-place" onClick={() => onTalk(npc)} aria-label={`Talk to ${villager.name}. ${left} ${left === 1 ? villager.noun : `${villager.noun}s`} left`}><span className="world-place-badge" data-key={keyLabel(keybinds.interact)}>{left}</span></button>
+        return <button type="button" key={npc} ref={element => { if (element) markers.current.set(npc, element); else markers.current.delete(npc) }} className="world-place" onClick={() => onTalk(npc)} aria-label={`Talk to ${villager.name}. ${left} ${left === 1 ? villager.noun : `${villager.noun}s`} left`}><span className="world-place-badge">{left}</span></button>
       })}
     </div>
     <div className="world-controls"><div className="world-dpad" aria-label="Movement controls">{[{ key: 'arrowleft', symbol: '←', label: 'Walk left' }, { key: 'arrowup', symbol: '↑', label: 'Walk up' }, { key: 'arrowdown', symbol: '↓', label: 'Walk down' }, { key: 'arrowright', symbol: '→', label: 'Walk right' }].map(control => <button type="button" key={control.key} disabled={!canMove} aria-label={control.label} onPointerDown={event => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); beginMove(control.key) }} onPointerUp={() => keys.current.delete(control.key)} onPointerCancel={() => keys.current.delete(control.key)} onLostPointerCapture={() => keys.current.delete(control.key)} onKeyDown={event => { if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); beginMove(control.key) } }} onKeyUp={() => keys.current.delete(control.key)}>{control.symbol}</button>)}</div><button type="button" className="world-jump" disabled={!canMove} onClick={beginJump}>Jump</button></div>

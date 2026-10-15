@@ -66,8 +66,8 @@ How Sidequest works
 - Screen time unlocks each day only after every one of today's quests is approved. Then the child starts or pauses the countdown with the play button on the screen-time panel at the top. If a parent adds another quest today, the clock locks again until it is approved, and the remaining time is kept. Unused time ends at midnight. A parent can pause play: walking stops, but the Journal still works. The countdown only tracks Sidequest's allowance; it does not control other apps.
 - Other villagers just like to chat: Biscuit the dog by the cottage (mostly says woof), Gill the angler at the lake and Hazel the gardener in the field.
 - The village has a cottage, a library, a windmill, Bram's stone forge with a smoking chimney, a lake and a fenced field of crops with a gate. It follows the real seasons and time of day, so windows glow at night.
-- Controls: the game state lists this device's keys. Arrow keys always walk too. Clicking or tapping the ground walks there. Touch screens show arrow buttons and a Jump button. Esc, or the gear button on touch screens, opens the menu: Alarm clock, Keybinds, Settings (villager voices) and AI helper, where the child can change your name and voice. The child talks to you with your key or the button with your picture at the top.
-- Wake-up alarm: the parent sets the time. When it rings, the child plays a short game to stop it: whack-a-mole, memory pairs or number order, changing each day. Five minutes later a check-in game opens with one minute to finish; missing it makes the alarm ring again. In the menu's Alarm clock page the child picks Classic bells, Morning chimes or Birdsong, enables sound on the device and can keep the screen awake. The game page must stay open for the alarm to ring.
+- Controls: the game state lists this device's keys. Arrow keys always walk too, and holding the sprint key while walking runs faster. Clicking or tapping the ground walks there. Touch screens show arrow buttons and a Jump button. Esc, or the gear button on touch screens, opens the menu: Alarm clock, Keybinds, Settings (villager voices) and AI helper, where the child can change your name and voice. The child talks to you with your key or the button with your picture at the top.
+- Wake-up alarm: the parent sets the time. When it rings, the child plays a short game to stop it: whack-a-mole or memory pairs, picked at random each time. Waking within a minute earns 100 XP and 50 gold; the reward shrinks each minute to nothing at fifteen minutes, and after that every five more minutes costs 5 gold. Five minutes later a check-in game opens with one minute to finish; missing it makes the alarm ring again. In the menu's Alarm clock page the child picks Classic bells, Morning chimes or Birdsong, enables sound on the device and can keep the screen awake. The game page must stay open for the alarm to ring.
 
 What you can do
 - Answer questions about the game, today's quests, rewards, screen time and the alarm using only the game state below. Never guess or invent quests, numbers or times. If something is not in the game state, say you do not know.
@@ -89,7 +89,7 @@ const placeNames: Record<Place, string> = {
   chores: 'exercise from Bram the blacksmith',
 }
 const statusNames: Record<Quest['status'], string> = { todo: 'to do', pending: 'waiting for parent approval', approved: 'approved (done)' }
-const actionNames: Record<string, string> = { up: 'walk up', left: 'walk left', down: 'walk down', right: 'walk right', jump: 'jump', interact: 'interact', helper: 'talk to you' }
+const actionNames: Record<string, string> = { up: 'walk up', left: 'walk left', down: 'walk down', right: 'walk right', sprint: 'sprint (hold while walking)', jump: 'jump', interact: 'interact', helper: 'talk to you' }
 
 function minutes(milliseconds: number): string {
   const total = Math.ceil(milliseconds / 60_000)

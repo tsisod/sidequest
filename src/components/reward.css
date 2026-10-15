@@ -1,0 +1,40 @@
+/* Shared reward effects: particle bursts and the XP/gold celebration used by wake-up games and quest rewards. */
+.burst { position: absolute; left: 50%; top: 45%; z-index: 3; width: 0; height: 0; pointer-events: none; }
+.burst > i { position: absolute; left: calc(var(--size) / -2); top: calc(var(--size) / -2); width: var(--size); height: var(--size); background: var(--colour); animation: reward-fly 700ms cubic-bezier(.12, .75, .3, 1) var(--delay) both; }
+.burst-stars > i { clip-path: polygon(33% 0, 67% 0, 67% 33%, 100% 33%, 100% 67%, 67% 67%, 67% 100%, 33% 100%, 33% 67%, 0 67%, 0 33%, 33% 33%); width: calc(var(--size) * 1.6); height: calc(var(--size) * 1.6); }
+.burst-dust { top: 74%; }
+.burst-dust > i { animation-duration: 520ms; opacity: .9; }
+.burst-leaves > i { animation-duration: 900ms; animation-name: reward-fly-fall; }
+.reward-celebration { position: fixed; inset: 0; z-index: 40; pointer-events: none; font-family: 'Pixelify Sans', monospace; color: #39291f; display: grid; place-items: center; overflow: hidden; background: radial-gradient(circle at 50% 45%, rgb(255 240 190 / .35), rgb(20 24 16 / .6) 70%); animation: reward-fade-in 260ms ease-out both; }
+.reward-rays { position: absolute; left: 50%; top: 45%; width: 170vmax; height: 170vmax; translate: -50% -50%; border-radius: 50%; background: repeating-conic-gradient(rgb(255 232 150 / .32) 0deg 9deg, transparent 9deg 18deg); -webkit-mask-image: radial-gradient(circle, #000 0 12%, transparent 55%); mask-image: radial-gradient(circle, #000 0 12%, transparent 55%); animation: reward-spin 14s linear infinite; }
+.reward-coins { position: absolute; inset: 0; pointer-events: none; }
+.reward-coins > i { position: absolute; top: -48px; left: var(--left); width: 30px; height: 30px; filter: drop-shadow(2px 2px 0 rgb(0 0 0 / .3)); animation: reward-coin-fall var(--duration) cubic-bezier(.45, 0, .75, .6) var(--delay) both; }
+.reward-card { position: relative; box-sizing: border-box; border: 8px solid transparent; border-image: var(--game-ui-frame, url('/assets/learnspace-ui/window-frame.svg')) 8 fill / 8px / 0 stretch; background: #f6e5b7 padding-box; box-shadow: 3px 3px 0 rgb(0 0 0 / 35%); display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: min(300px, 84vw); padding: 14px 26px 18px; animation: reward-card-in 640ms cubic-bezier(.2, 1.6, .4, 1) both; }
+.reward-card > .burst { top: 30%; }
+.reward-solo { position: relative; display: grid; place-items: center; animation: reward-card-in 640ms cubic-bezier(.2, 1.6, .4, 1) both; }
+.reward-solo > .reward-emblem { width: 176px; height: 176px; margin: 0; }
+.reward-solo > .burst { top: 50%; }
+.reward-emblem { width: 104px; height: 104px; margin-top: -64px; filter: drop-shadow(0 0 18px rgb(255 214 100 / .9)); animation: reward-emblem-bob 2.6s ease-in-out infinite; }
+.reward-lines { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.reward-line { display: inline-flex; align-items: center; gap: 10px; font-size: 46px; line-height: 1.05; font-variant-numeric: tabular-nums; animation: reward-line-in 500ms cubic-bezier(.2, 1.5, .4, 1) both; }
+.reward-line small { font-size: 22px; color: #6e5037; }
+.reward-xp { animation-delay: 260ms; }
+.reward-xp .game-ui-icon { color: #e09a2a; animation: reward-spin-y 1.6s ease-in-out 500ms infinite; }
+.reward-gold { animation-delay: 420ms; }
+.reward-gold .game-ui-icon { color: #b8741a; }
+.reward-loss, .reward-loss .game-ui-icon { color: #b33a2e; }
+@keyframes reward-fly { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(.3); opacity: 0; } }
+@keyframes reward-fly-fall { 0% { transform: translate(0, 0) rotate(0); opacity: 1; } 55% { transform: translate(var(--dx), var(--dy)) rotate(180deg); opacity: 1; } 100% { transform: translate(var(--dx), calc(var(--dy) + 60px)) rotate(320deg); opacity: 0; } }
+@keyframes reward-fade-in { from { opacity: 0; } }
+@keyframes reward-spin { to { rotate: 360deg; } }
+@keyframes reward-coin-fall { 0% { transform: translateY(0) rotate(0); opacity: 1; } 100% { transform: translateY(calc(100dvh + 96px)) rotate(calc(var(--spin) * 540deg)); opacity: 1; } }
+@keyframes reward-card-in { 0% { opacity: 0; transform: scale(.3) translateY(40px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes reward-emblem-bob { 50% { transform: translateY(-6px) rotate(8deg); } }
+@keyframes reward-line-in { from { opacity: 0; transform: translateX(-30px) scale(.6); } }
+@keyframes reward-spin-y { 0%, 60%, 100% { transform: scaleX(1); } 30% { transform: scaleX(-1); } }
+
+@media (max-width: 520px) { .reward-line { font-size: 40px; } }
+@media (prefers-reduced-motion: reduce) {
+  .burst, .reward-coins { display: none; }
+  .reward-celebration, .reward-celebration * { animation: none !important; }
+}

@@ -1,14 +1,14 @@
 import { useEffect, useId, useReducer, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import type { WakeGameKind } from '../../shared/domain'
-import Icon from '../game/GameIcon'
-import { bonkedMole, burrow, mole } from './pixelArt'
-import { PixelRuns } from './Pixels'
-import { Burst } from './WakeScene'
+import { randomWakeGame } from '../../shared/wakeAlarm'
+import { bonkedMole, burrow, mole } from '../components/pixelArt'
+import { PixelRuns } from '../components/Pixels'
+import { Burst } from '../components/RewardCelebration'
 import './alarm.css'
 
 type Hud = (done: number, total: number) => ReactNode
-export type WakeChallengeProps = { game: WakeGameKind; attemptKey: string; onComplete: () => void; disabled?: boolean; hud: Hud }
+export type WakeChallengeProps = { onComplete: (game: WakeGameKind) => void; disabled?: boolean; hud: Hud }
 type GameProps = { onComplete: () => void; disabled: boolean; hud: Hud }
 type Timers = Set<ReturnType<typeof setTimeout>>
 
@@ -36,11 +36,11 @@ function shake(element: HTMLElement | null, strength = 5) {
   element.animate([{ translate: '0 0' }, { translate: `${-strength}px ${strength / 2}px` }, { translate: `${strength}px ${-strength / 2}px` }, { translate: `${-strength / 2}px 0` }, { translate: '0 0' }], { duration: 220, easing: 'ease-out' })
 }
 
-export default function WakeChallenge({ game, attemptKey, ...props }: WakeChallengeProps) {
-  const playProps = { ...props, disabled: props.disabled ?? false }
-  return <div className="wake-alarm-control wake-challenge-only">
-    {game === 'moles' ? <Moles key={`${game}:${attemptKey}`} {...playProps} /> : game === 'memory' ? <Memory key={`${game}:${attemptKey}`} {...playProps} /> : <Numbers key={`${game}:${attemptKey}`} {...playProps} />}
-  </div>
+/** Mount with a new key for each wake-up test so it rolls a fresh random game. */
+export default function WakeChallenge({ onComplete, disabled = false, hud }: WakeChallengeProps) {
+  const [game] = useState(() => randomWakeGame())
+  const Game = game === 'moles' ? Moles : Memory
+  return <div className="wake-alarm-control wake-challenge-only"><Game onComplete={() => onComplete(game)} disabled={disabled} hud={hud} /></div>
 }
 
 const MOLE_HITS = 8
@@ -80,6 +80,12 @@ function Moles({ onComplete, disabled, hud }: GameProps) {
   const timers = useTimers()
   const nextId = useRef(0)
   const board = useRef<HTMLDivElement>(null)
+  const complete = useRef(onComplete)
+  useEffect(() => { complete.current = onComplete })
+  // React to hits the reducer actually counted: a tap that loses the race with a retreating mole changes nothing.
+  useEffect(() => { if (field.hits > 0) shake(board.current) }, [field.hits])
+  // Finishing a beat after the last hit keeps the dialog open, so that tap's click cannot fall through to the page behind it.
+  useEffect(() => { if (won) later(timers, 900, () => complete.current()) }, [won, timers])
   useEffect(() => {
     if (disabled || won) return
     let running = true
@@ -97,10 +103,7 @@ function Moles({ onComplete, disabled, hud }: GameProps) {
     const hole = field.holes[index]
     if (disabled || won || hole.state !== 'up') return
     dispatch({ kind: 'whack', id: hole.id })
-    shake(board.current)
     later(timers, 520, () => dispatch({ kind: 'clear', id: hole.id }))
-    // Hits land on pointerdown; finishing a beat later keeps the dialog open so this tap's click cannot fall through to the page behind it.
-    if (field.hits + 1 === MOLE_HITS) later(timers, 900, onComplete)
   }
   return <section className="wake-challenge" data-wake-game="moles" aria-label={`Whack-a-mole. Bonk ${MOLE_HITS} moles before they duck back down.`}>
     {hud(field.hits, MOLE_HITS)}
@@ -154,44 +157,12 @@ function Memory({ onComplete, disabled, hud }: GameProps) {
     <div className="wake-board wake-memory-board">{deck.map((face, index) => {
       const isMatched = matched.includes(index)
       const visible = flipped.includes(index) || isMatched
-      return <button type="button" className="wake-card" key={index} data-face={visible ? 'up' : 'down'} data-matched={isMatched || undefined} data-wrong={wrong.includes(index) || undefined} disabled={disabled || isMatched} aria-label={visible ? `${face.name} card ${index + 1}${isMatched ? ', matched' : ', revealed'}` : `Card ${index + 1}, face down`} onClick={() => flip(index)}>
+      return <button type="button" className="wake-card" key={index} data-face={visible ? 'up' : 'down'} data-matched={isMatched || undefined} data-wrong={wrong.includes(index) || undefined} disabled={disabled} aria-disabled={isMatched || undefined} aria-label={visible ? `${face.name} card ${index + 1}${isMatched ? ', matched' : ', revealed'}` : `Card ${index + 1}, face down`} onClick={() => flip(index)}>
         <span className="wake-card-inner">
           <span className="wake-card-face wake-card-back"><CropSprite {...SACK} /></span>
           <span className="wake-card-face wake-card-front"><CropSprite x={face.x} y={face.y} /></span>
         </span>
         {isMatched && <Burst key="match" kind="leaves" count={14} spread={90} />}
-      </button>
-    })}</div>
-  </section>
-}
-
-function Numbers({ onComplete, disabled, hud }: GameProps) {
-  const [numbers] = useState(() => shuffled(Array.from({ length: 20 }, (_, index) => index + 1)).slice(0, 6))
-  const [order] = useState(() => [...numbers].sort((a, b) => a - b))
-  const [found, setFound] = useState(0)
-  const [wrong, setWrong] = useState<{ value: number; key: number } | null>(null)
-  const foundRef = useRef(0)
-  const misses = useRef(0)
-  const timers = useTimers()
-  function choose(value: number) {
-    if (disabled || foundRef.current >= order.length) return
-    if (value !== order[foundRef.current]) {
-      const key = ++misses.current
-      setWrong({ value, key })
-      later(timers, 420, () => setWrong(current => current?.key === key ? null : current))
-      return
-    }
-    foundRef.current++
-    setFound(foundRef.current)
-    if (foundRef.current === order.length) later(timers, 700, onComplete)
-  }
-  return <section className="wake-challenge" data-wake-game="numbers" aria-label="Number wake-up challenge. Tap the numbers from smallest to largest.">
-    {hud(found, order.length)}
-    <div className="wake-board wake-number-board">{numbers.map(value => {
-      const done = order.indexOf(value) < found
-      return <button key={value} type="button" className="wake-sign" data-found={done || undefined} data-wrong={wrong?.value === value || undefined} disabled={disabled || done} aria-label={`Number ${value}${done ? ', found' : ''}`} onClick={() => choose(value)}>
-        <span className="wake-sign-board" key={wrong?.value === value ? wrong.key : 'sign'}><b>{value}</b>{done && <span className="wake-sign-check"><Icon name="check" size={22} /></span>}</span>
-        {done && <Burst key="found" kind="stars" count={10} spread={70} />}
       </button>
     })}</div>
   </section>

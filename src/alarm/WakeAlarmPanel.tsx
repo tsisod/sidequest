@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import type { ActionResult, DateKey, Family, FamilyCommand, WakePhase, WakeSound, WakeStage } from '../../shared/domain'
+import type { ActionResult, DateKey, Family, FamilyCommand, WakeGameKind, WakePhase, WakeSound, WakeStage } from '../../shared/domain'
 import { wakeRewardFor } from '../../shared/sidequest'
 import { parseWakeSound, wakePhase } from '../../shared/wakeAlarm'
 import Icon from '../game/GameIcon'
 import { daylightAt, localTime, seasonFor } from '../game/sky'
 import WakeChallenge from './WakeChallenge'
-import { WakeCelebration, WakeHud, WakeScene } from './WakeScene'
+import { RewardCelebration } from '../components/RewardCelebration'
+import { WakeHud, WakeScene } from './WakeScene'
 import { useWakeAudio, useWakeScreenLock } from './useWakeAudio'
 import './alarm.css'
 
@@ -29,7 +30,7 @@ export default function WakeAlarmPanel({ family, now, onCommand, settingsHost, o
   const challenge = phase.kind === 'ringing' || phase.kind === 'check' ? phase : null
   const attemptKey = challenge ? attemptFor(challenge) : null
   const [acceptedAttempt, setAcceptedAttempt] = useState<string | null>(null)
-  const [wonAttempt, setWonAttempt] = useState<string | null>(null)
+  const [wonAttempt, setWonAttempt] = useState<{ key: string; game: WakeGameKind } | null>(null)
   const [pending, setPending] = useState<'sound' | 'completion' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [keepAwake, setKeepAwake] = useState(false)
@@ -75,20 +76,20 @@ export default function WakeAlarmPanel({ family, now, onCommand, settingsHost, o
     } catch { setError('The sound choice could not be saved. Try again.') }
     finally { commandLock.current = false; setPending(null) }
   }
-  async function saveWin(current: ChallengePhase) {
+  async function saveWin(current: ChallengePhase, game: WakeGameKind) {
     if (commandLock.current) return
     const key = attemptFor(current)
     commandLock.current = true
     setPending('completion')
     setError(null)
     try {
-      const result = await onCommand({ kind: 'complete-wake-game', date: current.date, scheduledAt: current.scheduledAt, stage: stageFor(current), game: current.game })
+      const result = await onCommand({ kind: 'complete-wake-game', date: current.date, scheduledAt: current.scheduledAt, stage: stageFor(current), game })
       if (result.ok) { setAcceptedAttempt(key); setCelebration({ date: current.date, scheduledAt: current.scheduledAt, stage: stageFor(current) }) }
       else setError(result.message)
     } catch { setError('Your win could not be saved. Try saving again.') }
     finally { commandLock.current = false; setPending(null) }
   }
-  function won(current: ChallengePhase) { setWonAttempt(attemptFor(current)); void saveWin(current) }
+  function won(current: ChallengePhase, game: WakeGameKind) { setWonAttempt({ key: attemptFor(current), game }); void saveWin(current, game) }
 
   const readinessText = soundReady ? 'Sound enabled on this device' : audio.readiness === 'unsupported' ? 'Sound is unavailable in this browser.' : audio.readiness === 'not-enabled' ? 'Sound is not enabled on this device.' : 'The browser has paused sound. Enable it again.'
   const enableSound = <button className="wake-button wake-button-primary" type="button" disabled={audio.readiness === 'unsupported'} onClick={() => { void runtime.enable() }}><Icon name="volume" size={18} />Enable sound on this device</button>
@@ -109,10 +110,10 @@ export default function WakeAlarmPanel({ family, now, onCommand, settingsHost, o
     <dialog className="wake-dialog wake-active-dialog" ref={challengeRef} tabIndex={-1} aria-label={challenge && stageFor(challenge) === 'first' ? `Good morning, ${family.childName}. Finish the game to quiet the alarm.` : 'Still awake? Finish one more game.'} onCancel={event => event.preventDefault()}>
       {showing && <WakeScene season={seasonFor(local, family.timeZone)} daylight={daylightAt(local, family.timeZone)}>
         {challenge && activeChallenge && <div className="wake-active-body">
-          <WakeChallenge game={challenge.game} attemptKey={attemptFor(challenge)} disabled={busy || wonAttempt === attemptFor(challenge)} onComplete={() => won(challenge)} hud={(done, total) => <WakeHud reward={liveReward} ringing={phase.kind === 'ringing'} done={done} total={total} />} />
-          {error && <p className="wake-error" role="alert">{error}</p>}{wonAttempt === attemptFor(challenge) && pending !== 'completion' && acceptedAttempt !== attemptFor(challenge) && <button className="wake-button wake-button-primary wake-retry" type="button" disabled={busy} onClick={() => { void saveWin(challenge) }}>Save completion again<Icon name="arrow" size={17} /></button>}
+          <WakeChallenge key={attemptFor(challenge)} disabled={busy || wonAttempt?.key === attemptFor(challenge)} onComplete={game => won(challenge, game)} hud={(done, total) => <WakeHud reward={liveReward} ringing={phase.kind === 'ringing'} done={done} total={total} />} />
+          {error && <p className="wake-error" role="alert">{error}</p>}{wonAttempt?.key === attemptFor(challenge) && pending !== 'completion' && acceptedAttempt !== attemptFor(challenge) && <button className="wake-button wake-button-primary wake-retry" type="button" disabled={busy} onClick={() => { if (wonAttempt) void saveWin(challenge, wonAttempt.game) }}>Save completion again<Icon name="arrow" size={17} /></button>}
         </div>}
-        {celebration && <WakeCelebration reward={earned && { xp: earned.xp, gold: earned.gold }} />}
+        {celebration && <RewardCelebration reward={earned && { xp: earned.xp, gold: earned.gold }} emblem="sun" announce={earned ? 'Awake!' : 'Awake! Check-in complete.'} />}
       </WakeScene>}
     </dialog>
   </div>

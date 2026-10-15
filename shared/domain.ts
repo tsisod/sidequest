@@ -45,7 +45,7 @@ export type PlayClock =
 
 export type AlarmTime = string & { readonly __brand: 'AlarmTime' }
 export type WakeSound = 'classic' | 'chimes' | 'birds'
-export type WakeGameKind = 'moles' | 'memory' | 'numbers'
+export type WakeGameKind = 'moles' | 'memory'
 export type WakeStage = 'first' | 'check'
 export type WakeProgress =
   | { kind: 'unstarted' }
@@ -62,10 +62,10 @@ export type WakeAlarm = {
 }
 export type WakePhase =
   | { kind: 'off' }
-  | { kind: 'scheduled'; date: DateKey; scheduledAt: number; game: WakeGameKind }
-  | { kind: 'ringing'; date: DateKey; scheduledAt: number; stage: WakeStage; ringingAt: number; game: WakeGameKind }
-  | { kind: 'waiting'; date: DateKey; scheduledAt: number; readyAt: number; deadlineAt: number; game: WakeGameKind }
-  | { kind: 'check'; date: DateKey; scheduledAt: number; deadlineAt: number; game: WakeGameKind }
+  | { kind: 'scheduled'; date: DateKey; scheduledAt: number }
+  | { kind: 'ringing'; date: DateKey; scheduledAt: number; stage: WakeStage; ringingAt: number }
+  | { kind: 'waiting'; date: DateKey; scheduledAt: number; readyAt: number; deadlineAt: number }
+  | { kind: 'check'; date: DateKey; scheduledAt: number; deadlineAt: number }
   | { kind: 'done'; date: DateKey; scheduledAt: number; nextAt: number }
 
 export type Family = {

@@ -36,7 +36,7 @@ async function waitUntil(instant) {
 }
 function completion(phase) {
   assert.ok(phase.kind === 'ringing' || phase.kind === 'check')
-  return { kind: 'complete-wake-game', date: phase.date, stage: phase.kind === 'check' ? 'check' : phase.stage, scheduledAt: phase.scheduledAt, game: phase.game }
+  return { kind: 'complete-wake-game', date: phase.date, stage: phase.kind === 'check' ? 'check' : phase.stage, scheduledAt: phase.scheduledAt, game: 'moles' }
 }
 
 try {
@@ -57,7 +57,7 @@ try {
   const scheduledPhase = wakePhase(scheduled.family.wakeAlarm, scheduled.serverNow, timeZone)
   assert.equal(scheduledPhase.kind, 'scheduled')
   assert.equal(scheduledPhase.scheduledAt, due)
-  await command('child', { kind: 'complete-wake-game', date: scheduledPhase.date, scheduledAt: due, stage: 'first', game: scheduledPhase.game }, false)
+  await command('child', { kind: 'complete-wake-game', date: scheduledPhase.date, scheduledAt: due, stage: 'first', game: 'moles' }, false)
 
   stage = 'first daily alarm'
   console.log(`Waiting ${Math.ceil((due - Date.now()) / 1000)} seconds for the real scheduled alarm.`)
@@ -77,7 +77,7 @@ try {
   assert.equal(waiting.kind, 'waiting')
   assert.equal(waiting.readyAt - originalProgress.firstPassedAt, 300_000)
   assert.equal(waiting.deadlineAt - waiting.readyAt, 60_000)
-  await command('child', { kind: 'complete-wake-game', date: waiting.date, scheduledAt: waiting.scheduledAt, stage: 'check', game: waiting.game }, false)
+  await command('child', { kind: 'complete-wake-game', date: waiting.date, scheduledAt: waiting.scheduledAt, stage: 'check', game: 'memory' }, false)
 
   stage = 'five-minute awake check'
   console.log('First game recorded. Waiting the actual five minutes for the awake check.')

@@ -1,4 +1,4 @@
-import type { AlarmTime, DateKey, TimeZone, WakeAlarm, WakeGameKind, WakePhase, WakeProgress, WakeResult, WakeSound, WakeStage } from './domain.ts'
+import type { AlarmTime, DateKey, TimeZone, WakeAlarm, WakeGameKind, WakePhase, WakeProgress, WakeResult, WakeSound } from './domain.ts'
 import { addDays, dateAt, parseDateKey } from './calendar.ts'
 
 const MINUTE = 60_000
@@ -77,16 +77,14 @@ export function alarmInstant(date: DateKey, time: AlarmTime, zone: TimeZone): nu
   }
   throw new Error('The wake-up time could not be resolved in this household time zone.')
 }
-export function wakeGameFor(date: DateKey, stage: WakeStage): WakeGameKind {
-  const games: WakeGameKind[] = ['moles', 'memory', 'numbers']
-  const days = Math.floor(Date.parse(`${date}T00:00:00.000Z`) / (24 * 60 * MINUTE))
-  const index = ((days % games.length) + games.length + (stage === 'check' ? 1 : 0)) % games.length
-  return games[index]
-}
+export const WAKE_GAMES = ['moles', 'memory'] as const satisfies readonly WakeGameKind[]
+export function parseWakeGame(value: unknown): WakeGameKind | null { return WAKE_GAMES.find(game => game === value) ?? null }
+/** Each wake-up test, first alarm and check-in alike, rolls a fresh game. */
+export function randomWakeGame(random: () => number = Math.random): WakeGameKind { return WAKE_GAMES[Math.min(WAKE_GAMES.length - 1, Math.floor(random() * WAKE_GAMES.length))] }
 function recheckPhase(progress: Extract<WakeProgress, { kind: 'recheck' }>, now: number): WakePhase {
   const readyAt = progress.firstPassedAt + 5 * MINUTE
   const deadlineAt = progress.firstPassedAt + 6 * MINUTE
-  const base = { date: progress.date, scheduledAt: progress.scheduledAt, game: wakeGameFor(progress.date, 'check') }
+  const base = { date: progress.date, scheduledAt: progress.scheduledAt }
   if (now < readyAt) return { kind: 'waiting', ...base, readyAt, deadlineAt }
   if (now < deadlineAt) return { kind: 'check', ...base, deadlineAt }
   return { kind: 'ringing', ...base, stage: 'check', ringingAt: deadlineAt }
@@ -102,8 +100,8 @@ export function wakePhase(alarm: WakeAlarm, now: number, zone: TimeZone): WakePh
     return recheckPhase(progress, now)
   }
   if (progress.kind === 'recheck' && progress.date === addDays(today, -1) && today >= alarm.startsOn && now < scheduledAt && progress.scheduledAt === alarmInstant(progress.date, alarm.time, zone)) return recheckPhase(progress, now)
-  if (now < scheduledAt) return { kind: 'scheduled', date, scheduledAt, game: wakeGameFor(date, 'first') }
-  return { kind: 'ringing', date, scheduledAt, stage: 'first', ringingAt: scheduledAt, game: wakeGameFor(date, 'first') }
+  if (now < scheduledAt) return { kind: 'scheduled', date, scheduledAt }
+  return { kind: 'ringing', date, scheduledAt, stage: 'first', ringingAt: scheduledAt }
 }
 // Waking within the first minute earns the full reward; each later minute takes 1/15 off until fifteen minutes earns nothing, then every further five minutes costs five gold.
 export const WAKE_XP = 100

@@ -99,3 +99,22 @@ export const coin = pixelArt([
   '.oodddddo.',
   '...oooo...',
 ], { o: '#8c4f14', y: '#fff0a8', Y: '#f2c14e', w: '#fffbe0', d: '#c9781e' })
+
+export const star = pixelArt([
+  '.......oo.......',
+  '......oYYo......',
+  '......oYYo......',
+  '.....oYwYYo.....',
+  'oooooYwYYYYooooo',
+  'oYYYYwYYYYYYYYYo',
+  '.oYYYYYYYYYYYYo.',
+  '..oYYYYYYYYYYo..',
+  '...oYYYYYYYYo...',
+  '...oYYYYYYYYo...',
+  '..oYYYYddYYYYo..',
+  '..oYYYdoodYYYo..',
+  '.oYYYdo..odYYYo.',
+  '.oYYdo....odYYo.',
+  'oYYdo......odYYo',
+  'oooo........oooo',
+], { o: '#a8641a', Y: '#f8c943', w: '#fff4c2', d: '#e09a2a' })

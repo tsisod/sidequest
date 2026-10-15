@@ -18,10 +18,7 @@
 .game-wallet { display: flex; align-items: center; gap: 4px; align-self: stretch; padding-left: 8px; border-left: 2px solid #d9b77d; color: #a06f24; font-size: 18px; font-variant-numeric: tabular-nums; }
 
 .game-hud-right { display: flex; align-items: flex-start; gap: 10px; }
-.game-time { display: flex; align-items: center; gap: 8px; padding: 0 6px 0 8px; color: #6e5037; pointer-events: auto; }
-.game-time > div { display: grid; gap: 3px; }
-.game-time > div > span { font-size: 12px; line-height: 1; }
-.game-time strong { color: #39291f; font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1; }
+.game-paused { display: flex; align-items: center; gap: 8px; padding: 0 12px 0 8px; color: #39291f; font-size: 14px; }
 .game-journal { display: flex; align-items: center; gap: 8px; padding: 0 12px 0 8px; color: #6e5037; font: inherit; cursor: pointer; pointer-events: auto; }
 .game-journal > span { display: grid; gap: 3px; font-size: 12px; line-height: 1; text-align: left; }
 .game-journal strong { color: #39291f; font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1; }
@@ -31,9 +28,6 @@
 .game-spark strong { max-width: 9ch; overflow: hidden; color: #39291f; font-size: 20px; font-weight: 500; line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
 .game-spark-avatar { position: relative; flex: none; width: 48px; height: 40px; overflow: hidden; }
 .game-spark-avatar > img { position: absolute; left: -25px; top: -19px; width: 96px; height: 96px; max-width: none; image-rendering: pixelated; }
-.game-icon { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 2px solid #8c592f; border-radius: 0; background: #e8c983; color: #39291f; box-shadow: inset 2px 2px #fff0c7, inset -2px -2px #bb8a4c; }
-button.game-icon:hover:not(:disabled) { background: #f3d693; }
-button.game-icon:active:not(:disabled) { transform: scale(.94); }
 
 
 .child-message { position: absolute; left: 50%; top: calc(max(16px,env(safe-area-inset-top)) + var(--hud-height) + 14px); transform: translateX(-50%); display: flex; align-items: center; padding: 3px 4px 3px 10px; max-width: calc(100% - 32px); color: #842f37; font: 14px 'Manrope',sans-serif; }
@@ -85,4 +79,4 @@ button.game-icon:active:not(:disabled) { transform: scale(.94); }
   .child-journal-dialog-top > span { gap: 7px; font-size: 23px; }
   .child-journal-total { padding-inline: 4px; }
 }
-@media (prefers-reduced-motion: reduce) { .child-quest-submit { transition: none; } button.game-icon:active:not(:disabled) { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .child-quest-submit { transition: none; } }

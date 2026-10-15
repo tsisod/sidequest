@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ActionResult, Family, FamilyCommand, Place, Quest } from '../../shared/domain'
-import { earnedGold, earnedXp, projectDay, remainingMs, screenUnlocked } from '../../shared/sidequest'
+import { earnedGold, earnedXp, projectDay, questEarnings } from '../../shared/sidequest'
+import { RewardCelebration } from '../components/RewardCelebration'
+import { useQuestRewards } from './useQuestRewards'
 import Icon from './GameIcon'
 import PixelWorld from './PixelWorld'
 import WakeAlarmPanel from '../alarm/WakeAlarmPanel'
@@ -24,12 +26,6 @@ const places = {
   chores: { title: 'Exercise with the blacksmith', icon: 'jump', color: 'green' },
 } satisfies Record<Place, { title: string; icon: 'book' | 'house' | 'jump'; color: string }>
 
-function timeString(milliseconds: number): string {
-  const seconds = Math.ceil(milliseconds / 1000)
-  const minutes = Math.floor(seconds / 60)
-  return `${minutes.toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`
-}
-
 type ChildGameProps = {
   family: Family
   now: number
@@ -52,7 +48,8 @@ export default function ChildGame({ family, now, onCommand, onSpeak, onAsk }: Ch
   const [sparkOpen, setSparkOpen] = useState(false)
   const [sparkTurns, setSparkTurns] = useState<SparkTurn[]>([])
   const closeMenu = useCallback(() => setMenuOpen(false), [])
-  const clearForAlarm = useCallback(() => { setMenuOpen(false); setSparkOpen(false) }, [])
+  // Back to the plain village view: used when the alarm takes over and when a reward celebration plays.
+  const clearToGame = useCallback(() => { setMenuOpen(false); setSparkOpen(false); setTalking(null); journalDialog.current?.close() }, [])
   useEffect(() => audio.attach(), [audio])
   useEffect(() => {
     const shortcut = (event: KeyboardEvent) => {
@@ -63,15 +60,14 @@ export default function ChildGame({ family, now, onCommand, onSpeak, onAsk }: Ch
     window.addEventListener('keydown', shortcut)
     return () => window.removeEventListener('keydown', shortcut)
   }, [keybinds.helper])
-  const remaining = remainingMs(family.clock, now)
-  const unlocked = screenUnlocked(family)
-  const clockRunning = unlocked && family.clock.kind === 'running' && remaining > 0
   const blocked = family.clock.kind === 'blocked'
   const todaysQuests = projectDay(family, family.sessionDay).quests
   const xp = earnedXp(family)
   const gold = earnedGold(family)
   const level = 1 + Math.floor(xp / 100)
   const currentXp = xp % 100
+  const questTotals = questEarnings(family)
+  const questReward = useQuestRewards(family.id, questTotals.xp, questTotals.gold, clearToGame)
 
   async function command(action: FamilyCommand, key: string): Promise<boolean> {
     if (busy) return false
@@ -103,11 +99,12 @@ export default function ChildGame({ family, now, onCommand, onSpeak, onAsk }: Ch
       <div className="game-hud-right">
         <button type="button" className="game-spark game-panel" onClick={() => setSparkOpen(true)} aria-label={`Talk to ${spark.name}, your AI helper`} aria-haspopup="dialog"><span className="game-spark-avatar" aria-hidden="true"><img src="/assets/learnspace-ui/spark-preview.png" alt="" width={48} height={48} /></span><span>Ask<strong>{spark.name}</strong></span></button>
         <button type="button" className="game-journal game-panel" onClick={() => journalDialog.current?.showModal()} aria-label={`Quest journal, ${finished} of ${todaysQuests.length} done`}><Icon name="book" size={20} /><span>Journal<strong>{finished}/{todaysQuests.length}</strong></span></button>
-        {(blocked || unlocked) && <div className="game-time game-panel"><Icon name={blocked ? 'pause' : 'clock'} size={20} /><div><span>Screen time</span><strong role={clockRunning ? 'timer' : undefined} aria-label={blocked ? 'Paused by your parent' : `${Math.ceil(remaining / 1000)} seconds of screen time`}>{blocked ? 'Paused' : timeString(remaining)}</strong></div>{!blocked && remaining > 0 && <button type="button" className="game-icon" disabled={busy !== null} onClick={() => void command({ kind: clockRunning ? 'pause-play' : 'start-play' }, 'clock')} aria-label={clockRunning ? 'Pause screen time' : 'Start screen time'}><Icon name={clockRunning ? 'pause' : 'play'} size={18} /></button>}</div>}
+        {blocked && <div className="game-paused game-panel" role="status"><Icon name="pause" size={20} /><span>Paused by your parent</span></div>}
         <button type="button" className="game-menu-open game-panel" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Icon name="settings" size={22} /></button>
       </div>
     </header>
-    <WakeAlarmPanel family={family} now={now} onCommand={onCommand} settingsHost={alarmHost} onChallenge={clearForAlarm} />
+    <WakeAlarmPanel family={family} now={now} onCommand={onCommand} settingsHost={alarmHost} onChallenge={clearToGame} />
+    {questReward && <RewardCelebration key={questReward.id} reward={questReward.reward} emblem="star" announce="Quest reward!" />}
 
     {villager?.role === 'quests' && <QuestGiverDialogue giver={villager} audio={audio} childName={family.childName} quests={todaysQuests.filter(quest => quest.place === villager.place)} busy={busy !== null} speak={onSpeak} onSubmit={questId => command({ kind: 'submit', questId }, questId)} onClose={() => setTalking(null)} />}
     {talking && villager?.role === 'chat' && <ChatDialogue chatter={villager} audio={audio} childName={family.childName} start={chatTurns[talking] ?? 0} speak={onSpeak} onClose={next => { setChatTurns(turns => ({ ...turns, [talking]: next })); setTalking(null) }} />}

@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { Family, FamilyCommand, TimeZone, WakeStage } from '../shared/domain.ts'
+import type { Family, FamilyCommand, TimeZone, WakeGameKind, WakeStage } from '../shared/domain.ts'
 import { addDays, dateAt, parseDateKey, parseTimeZone } from '../shared/calendar.ts'
 import { applyCommand, createFamily, earnedGold, earnedXp, parseFamily } from '../shared/sidequest.ts'
-import { alarmInstant, alarmVolume, defaultWakeAlarm, parseAlarmTime, parseWakeAlarm, parseWakeSound, wakeGameFor, wakePhase, wakeReward } from '../shared/wakeAlarm.ts'
+import { alarmInstant, alarmVolume, defaultWakeAlarm, parseAlarmTime, parseWakeAlarm, parseWakeGame, parseWakeSound, randomWakeGame, WAKE_GAMES, wakePhase, wakeReward } from '../shared/wakeAlarm.ts'
 
 const MINUTE = 60_000
 const DUE = Date.parse('2026-10-15T00:00:00.000Z')
@@ -17,7 +17,7 @@ function arm(value = '07:00', now = DUE - MINUTE, family = initial()): Family {
   return result.family
 }
 function winCommand(family: Family, stage: WakeStage, date = family.wakeAlarm.startsOn): Extract<FamilyCommand, { kind: 'complete-wake-game' }> {
-  return { kind: 'complete-wake-game', date, scheduledAt: alarmInstant(date, family.wakeAlarm.time, family.timeZone), stage, game: wakeGameFor(date, stage) }
+  return { kind: 'complete-wake-game', date, scheduledAt: alarmInstant(date, family.wakeAlarm.time, family.timeZone), stage, game: 'moles' }
 }
 function win(family: Family, stage: WakeStage, now: number, date = family.wakeAlarm.startsOn) { return applyCommand(family, winCommand(family, stage, date), { role: 'child', now }) }
 
@@ -41,7 +41,7 @@ test('primary alarm becomes due exactly on time and volume grows in bounded two-
   const family = arm()
   assert.equal(wakePhase(family.wakeAlarm, DUE - 1, family.timeZone).kind, 'scheduled')
   const ringing = wakePhase(family.wakeAlarm, DUE, family.timeZone)
-  assert.deepEqual(ringing, { kind: 'ringing', date: day(), scheduledAt: DUE, ringingAt: DUE, stage: 'first', game: wakeGameFor(day(), 'first') })
+  assert.deepEqual(ringing, { kind: 'ringing', date: day(), scheduledAt: DUE, ringingAt: DUE, stage: 'first' })
   assert.equal(alarmVolume(-1), 0.2)
   assert.equal(alarmVolume(1_999), 0.2)
   assert.equal(alarmVolume(2_000), 0.25)
@@ -56,8 +56,8 @@ test('first completion waits five minutes; follow-up has one minute to finish, t
   const readyAt = DUE + 10_000 + 5 * MINUTE
   const deadlineAt = readyAt + MINUTE
   assert.equal(wakePhase(first.family.wakeAlarm, readyAt - 1, zone()).kind, 'waiting')
-  assert.deepEqual(wakePhase(first.family.wakeAlarm, readyAt, zone()), { kind: 'check', date: day(), scheduledAt: DUE, deadlineAt, game: wakeGameFor(day(), 'check') })
-  assert.deepEqual(wakePhase(first.family.wakeAlarm, deadlineAt, zone()), { kind: 'ringing', date: day(), scheduledAt: DUE, stage: 'check', ringingAt: deadlineAt, game: wakeGameFor(day(), 'check') })
+  assert.deepEqual(wakePhase(first.family.wakeAlarm, readyAt, zone()), { kind: 'check', date: day(), scheduledAt: DUE, deadlineAt })
+  assert.deepEqual(wakePhase(first.family.wakeAlarm, deadlineAt, zone()), { kind: 'ringing', date: day(), scheduledAt: DUE, stage: 'check', ringingAt: deadlineAt })
   const done = win(first.family, 'check', deadlineAt + MINUTE)
   assert.equal(done.result.ok, true)
   assert.equal(wakePhase(done.family.wakeAlarm, deadlineAt + MINUTE, zone()).kind, 'done')
@@ -120,7 +120,8 @@ test('early wins, wrong games, wrong dates and parent gameplay are rejected', ()
   const first = win(family, 'first', DUE).family
   assert.equal(win(first, 'check', DUE + 5 * MINUTE - 1).result.ok, false)
   const action = winCommand(first, 'check')
-  assert.equal(applyCommand(first, { ...action, game: wakeGameFor(day(), 'first') }, { role: 'child', now: DUE + 5 * MINUTE }).result.ok, false)
+  assert.equal(applyCommand(first, { ...action, game: 'numbers' as unknown as WakeGameKind }, { role: 'child', now: DUE + 5 * MINUTE }).result.ok, false)
+  assert.equal(applyCommand(first, { ...action, game: 'memory' }, { role: 'child', now: DUE + 5 * MINUTE }).result.ok, true)
   assert.equal(win(first, 'check', DUE + 5 * MINUTE, addDays(day(), 1)).result.ok, false)
   assert.equal(applyCommand(first, action, { role: 'parent', now: DUE + 5 * MINUTE }).result.ok, false)
   assert.equal(applyCommand(first, { kind: 'set-wake-alarm', enabled: false, time: time() }, { role: 'child', now: DUE }).result.ok, false)
@@ -188,10 +189,17 @@ test('previous-date recheck crosses midnight, finishes once, and is superseded b
   assert.deepEqual({ ...done, wakeAlarm: null }, { ...armed, wakeAlarm: null })
 })
 
-test('primary games rotate over three days and the follow-up always uses the next game', () => {
-  const primary = [0, 1, 2].map(offset => wakeGameFor(addDays(day(), offset), 'first'))
-  assert.equal(new Set(primary).size, 3)
-  for (let offset = 0; offset < 3; offset++) assert.equal(wakeGameFor(addDays(day(), offset), 'check'), wakeGameFor(addDays(day(), offset + 1), 'first'))
+test('each wake-up test rolls whack-a-mole or memory at random, and only those two are accepted', () => {
+  assert.deepEqual(WAKE_GAMES, ['moles', 'memory'])
+  assert.equal(randomWakeGame(() => 0), 'moles')
+  assert.equal(randomWakeGame(() => .4999), 'moles')
+  assert.equal(randomWakeGame(() => .5), 'memory')
+  assert.equal(randomWakeGame(() => .9999), 'memory')
+  assert.equal(randomWakeGame(() => 1), 'memory')
+  const rolls = new Set(Array.from({ length: 200 }, () => randomWakeGame()))
+  assert.deepEqual([...rolls].sort(), ['memory', 'moles'])
+  for (const game of ['moles', 'memory']) assert.equal(parseWakeGame(game), game)
+  for (const game of ['numbers', '', null, 1]) assert.equal(parseWakeGame(game), null)
 })
 
 test('DST resolution chooses the first repeated minute and earliest valid minute after a gap', () => {

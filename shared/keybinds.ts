@@ -1,5 +1,5 @@
 export type MoveAction = 'up' | 'down' | 'left' | 'right'
-export type GameAction = MoveAction | 'jump' | 'interact' | 'helper'
+export type GameAction = MoveAction | 'sprint' | 'jump' | 'interact' | 'helper'
 export type Keybinds = Readonly<Record<GameAction, string>>
 export type Rebind = { ok: true; keybinds: Keybinds; swapped: GameAction | null } | { ok: false; message: string }
 
@@ -8,14 +8,16 @@ export const gameActions: readonly { action: GameAction; label: string }[] = [
   { action: 'left', label: 'Walk left' },
   { action: 'down', label: 'Walk down' },
   { action: 'right', label: 'Walk right' },
+  { action: 'sprint', label: 'Sprint (hold)' },
   { action: 'jump', label: 'Jump' },
   { action: 'interact', label: 'Interact' },
   { action: 'helper', label: 'AI helper' },
 ]
-export const defaultKeybinds: Keybinds = { up: 'w', left: 'a', down: 's', right: 'd', jump: ' ', interact: 'e', helper: 'q' }
+export const defaultKeybinds: Keybinds = { up: 'w', left: 'a', down: 's', right: 'd', sprint: 'shift', jump: ' ', interact: 'e', helper: 'q' }
 const arrowKeys = new Map<string, MoveAction>([['arrowup', 'up'], ['arrowdown', 'down'], ['arrowleft', 'left'], ['arrowright', 'right']])
 
-function bindable(key: string): boolean { return key.length === 1 && key === key.toLowerCase() }
+// Single characters as typed in lowercase, plus Shift so sprint can be held with either hand.
+function bindable(key: string): boolean { return key === 'shift' || (key.length === 1 && key === key.toLowerCase()) }
 
 export function actionFor(keybinds: Keybinds, key: string): GameAction | null {
   return arrowKeys.get(key) ?? gameActions.find(({ action }) => keybinds[action] === key)?.action ?? null
@@ -28,7 +30,7 @@ export function heldDirection(keybinds: Keybinds, held: Iterable<string>): { dx:
 }
 
 export function rebind(keybinds: Keybinds, action: GameAction, key: string): Rebind {
-  if (!bindable(key)) return { ok: false, message: 'Pick a letter, a number or Space.' }
+  if (!bindable(key)) return { ok: false, message: 'Pick a letter, a number, Space or Shift.' }
   const swapped = gameActions.find(other => other.action !== action && keybinds[other.action] === key)?.action ?? null
   return { ok: true, swapped, keybinds: { ...keybinds, [action]: key, ...swapped ? { [swapped]: keybinds[action] } : {} } }
 }
@@ -41,4 +43,4 @@ export function parseKeybinds(value: unknown): Keybinds {
   return Object.fromEntries(gameActions.map(({ action }, index) => [action, keys[index]])) as Keybinds
 }
 
-export function keyLabel(key: string): string { return key === ' ' ? 'Space' : key.toUpperCase() }
+export function keyLabel(key: string): string { return key === ' ' ? 'Space' : key === 'shift' ? 'Shift' : key.toUpperCase() }

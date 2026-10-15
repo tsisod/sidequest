@@ -89,14 +89,14 @@ export function cameraFor(hero: Point, viewWidth: number, viewHeight: number): P
 }
 
 
-type Scene = { hero: Point; spark: Point; direction: Direction; moving: boolean; time: number; jumpHeight: number; pose: Pose; dust: readonly Particle[]; twinkles: readonly Particle[]; smoke: readonly Particle[]; motion: boolean; camera: Camera; viewWidth: number; viewHeight: number; daylight: Daylight }
+type Scene = { hero: Point; spark: Point; direction: Direction; moving: boolean; sprinting: boolean; time: number; jumpHeight: number; pose: Pose; dust: readonly Particle[]; twinkles: readonly Particle[]; smoke: readonly Particle[]; motion: boolean; camera: Camera; viewWidth: number; viewHeight: number; daylight: Daylight }
 
 export function gateFrame(hero: Point): number {
   const distance = Math.hypot(hero.x - gatePoint.x, hero.y - gatePoint.y)
   return distance < 22 ? 3 : distance < 30 ? 2 : distance < 38 ? 1 : 0
 }
 
-export function drawFarm(context: CanvasRenderingContext2D, assets: FarmAssets, { hero, spark, direction, moving, time, jumpHeight, pose, dust, twinkles, smoke, motion, camera, viewWidth, viewHeight, daylight }: Scene) {
+export function drawFarm(context: CanvasRenderingContext2D, assets: FarmAssets, { hero, spark, direction, moving, sprinting, time, jumpHeight, pose, dust, twinkles, smoke, motion, camera, viewWidth, viewHeight, daylight }: Scene) {
   const { art, images } = assets
   context.imageSmoothingEnabled = false
   context.fillStyle = '#29412e'
@@ -116,7 +116,7 @@ export function drawFarm(context: CanvasRenderingContext2D, assets: FarmAssets, 
   }
   const player = images.get(`farmer-${moving ? 'walk' : 'idle'}-${direction}`)
   const heroSize = [Math.round(32 * pose.scaleX), Math.round(32 * pose.scaleY)] as const
-  if (player) actors.push({ image: player, crop: [moving ? Math.floor(time / 140) % 4 * 32 : 0, 0, 32, 32], x: hero.x - heroSize[0] / 2, y: hero.y - jumpHeight + 2 - heroSize[1], depth: hero.y, size: heroSize, shadow: { x: hero.x, radius: 8 - jumpHeight / 5 } })
+  if (player) actors.push({ image: player, crop: [moving ? Math.floor(time / (sprinting ? 85 : 140)) % 4 * 32 : 0, 0, 32, 32], x: hero.x - heroSize[0] / 2, y: hero.y - jumpHeight + 2 - heroSize[1], depth: hero.y, size: heroSize, shadow: { x: hero.x, radius: 8 - jumpHeight / 5 } })
 
   drawParticles(context, dust, time)
   actors.sort((a, b) => a.depth - b.depth)

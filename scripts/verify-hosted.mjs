@@ -3,7 +3,7 @@ import { randomBytes, randomUUID } from 'node:crypto'
 import { ConvexClient, ConvexHttpClient } from 'convex/browser'
 import { makeFunctionReference } from 'convex/server'
 import { addDays, dateAt, parseTimeZone } from '../shared/calendar.ts'
-import { alarmInstant, parseAlarmTime, wakeGameFor } from '../shared/wakeAlarm.ts'
+import { alarmInstant, parseAlarmTime } from '../shared/wakeAlarm.ts'
 import { earnedGold, earnedXp, parseFamily, projectDay, remainingMs, screenUnlocked } from '../shared/sidequest.ts'
 
 if (process.argv.length !== 3 || !/^https:\/\/[a-z0-9-]+\.convex\.cloud\/?$/.test(process.argv[2])) {
@@ -95,7 +95,7 @@ try {
   assert.deepEqual(sounded.wakeAlarm.progress, armed.wakeAlarm.progress)
   assert.deepEqual(sounded.quests, parentTasks, 'Alarm settings and sounds must not change quest progress.')
   const futureDate = addDays(dateAt(Date.now(), timeZone), 2)
-  await command('child', { kind: 'complete-wake-game', date: futureDate, scheduledAt: alarmInstant(futureDate, wakeTime, timeZone), stage: 'first', game: wakeGameFor(futureDate, 'first') }, false)
+  await command('child', { kind: 'complete-wake-game', date: futureDate, scheduledAt: alarmInstant(futureDate, wakeTime, timeZone), stage: 'first', game: 'moles' }, false)
   await command('parent', { kind: 'set-wake-alarm', enabled: false, time: wakeTime })
   assert.equal((await read()).family.wakeAlarm.enabled, false)
 

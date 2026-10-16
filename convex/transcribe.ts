@@ -1,7 +1,7 @@
 import { MAX_VOICE_CLIP_BYTES } from '../shared/parentVoice.ts'
 
 export type Clip = { audio: ArrayBuffer; mimeType: string; language: string }
-export type Transcript = { ok: true; text: string } | { ok: false; reason: 'not-set-up' | 'missing-permission' | 'key-rejected' | 'busy' | 'unclear' }
+export type Transcript = { ok: true; text: string } | { ok: false; reason: 'not-set-up' | 'missing-permission' | 'out-of-credits' | 'key-rejected' | 'busy' | 'unclear' }
 
 const extensions: Record<string, string> = { webm: 'webm', ogg: 'ogg', mp4: 'm4a', mpeg: 'mp3', wav: 'wav', 'x-wav': 'wav' }
 
@@ -23,6 +23,7 @@ export async function transcribe(clip: Clip, maxLength: number): Promise<Transcr
     const detail = (await response.text().catch(() => '')).slice(0, 300)
     console.error('Speech-to-text failed', response.status, detail)
     if (detail.includes('missing_permissions')) return { ok: false, reason: 'missing-permission' }
+    if (detail.includes('quota_exceeded')) return { ok: false, reason: 'out-of-credits' }
     return { ok: false, reason: response.status === 401 ? 'key-rejected' : response.status === 429 ? 'busy' : 'unclear' }
   }
   const result: { text?: unknown } = await response.json()

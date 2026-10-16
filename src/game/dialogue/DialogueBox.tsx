@@ -28,8 +28,8 @@ export function DialogueBox({ character, audio, speak, scene, text, badge, choic
   const actions = useRef<HTMLDivElement>(null)
   const [paging, setPaging] = useState({ scene, page: 0 })
   const pages = useMemo(() => dialoguePages(text), [text])
-  const voices = useVoiceLines(pages, character.voice, speak)
   const shown = Math.min(paging.scene === scene ? paging.page : 0, pages.length - 1)
+  const voices = useVoiceLines(pages, shown, character.voice, speak)
   const lastPage = shown === pages.length - 1
   const play = useSound()
 

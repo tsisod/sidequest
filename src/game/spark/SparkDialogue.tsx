@@ -54,9 +54,9 @@ export default function SparkDialogue({ spark, childName, keybinds, turns, audio
   const question = asked?.role === 'child' ? asked.text : undefined
   const text = last?.role === 'spark' ? last.text : `Hi ${childName}! I'm ${spark.name}. Ask me what to do today, tell me when you finish a quest, or ask me anything.`
   const pages = useMemo(() => dialoguePages(text), [text])
-  const voices = useVoiceLines(pages, spark.voice, speak)
   const [paging, setPaging] = useState({ text, page: 0 })
   const shown = Math.min(paging.text === text ? paging.page : 0, pages.length - 1)
+  const voices = useVoiceLines(pages, shown, spark.voice, speak)
   const lastPage = shown === pages.length - 1
   const play = useSound()
 

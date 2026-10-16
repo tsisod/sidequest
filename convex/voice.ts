@@ -161,6 +161,7 @@ export const command = actionGeneric({
 const transcriptProblems = {
   'not-set-up': 'Voice input is not set up yet: the server needs its ElevenLabs key.',
   'missing-permission': 'Voice input needs the "Speech to Text" permission turned on for the server\'s ElevenLabs key.',
+  'out-of-credits': 'Voice input has used up the ElevenLabs key\'s credits. Raise the key\'s credit limit in ElevenLabs, or type below.',
   'key-rejected': 'The server\'s ElevenLabs key is not working.',
   busy: 'Voice input is busy right now. Try again in a minute.',
   unclear: 'I couldn\'t understand the recording. Try again.',

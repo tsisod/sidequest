@@ -19,9 +19,10 @@ function loadVoiceLine(text: string, voice: Voice, speak: Speak): Promise<VoiceL
   return line
 }
 
-export function useVoiceLines(pages: readonly string[], voice: Voice, speak: Speak): ReadonlyMap<string, VoiceLine> {
+/** Voices the page on screen and the next one, so pages a child never reaches use no voice credits. */
+export function useVoiceLines(pages: readonly string[], shown: number, voice: Voice, speak: Speak): ReadonlyMap<string, VoiceLine> {
   const [lines, setLines] = useState<ReadonlyMap<string, VoiceLine>>(new Map())
-  const key = pages.join('\n')
+  const key = pages.slice(shown, shown + 2).join('\n')
   useEffect(() => {
     let live = true
     for (const text of key.split('\n')) void loadVoiceLine(text, voice, speak).then(line => { if (live) setLines(current => new Map(current).set(text, line)) })

@@ -47,7 +47,10 @@ export const speak = actionGeneric({
     if (!key) return unavailable('Voice is not set up yet.')
     const request = speechRequest(text, voice)
     const response = await fetch(request.url, { method: 'POST', headers: { 'xi-api-key': key, 'Content-Type': 'application/json' }, body: JSON.stringify(request.body) })
-    if (!response.ok) return unavailable('Voice is unavailable right now.')
+    if (!response.ok) {
+      console.error('Text-to-speech failed', response.status, (await response.text().catch(() => '')).slice(0, 300))
+      return unavailable('Voice is unavailable right now.')
+    }
     const result: { audio_base64?: unknown; alignment?: SpeechAlignment } = await response.json()
     if (typeof result.audio_base64 !== 'string') return unavailable('Voice is unavailable right now.')
     const audio = Uint8Array.from(atob(result.audio_base64), character => character.charCodeAt(0))

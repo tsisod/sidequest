@@ -100,6 +100,7 @@ export const hear = actionGeneric({
     if (heard.ok) return heard
     if (heard.reason === 'unclear') return { ok: false, message: `${name} couldn't hear that clearly. Try again, or type it.` }
     if (heard.reason === 'busy') return { ok: false, message: `${name} is busy listening to lots of people. Try again in a minute, or type it.` }
+    if (heard.reason === 'out-of-credits') return { ok: false, message: `Talking to ${name} out loud isn't working right now. Ask a parent, or type instead.` }
     return { ok: false, message: `Talking to ${name} out loud isn't set up yet. Ask a parent, or type instead.` }
   },
 })

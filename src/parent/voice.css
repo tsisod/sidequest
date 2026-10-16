@@ -24,6 +24,10 @@
 .p-voice-idle { filter: saturate(.85); }
 
 .p-voice-status { margin: 0; color: var(--p-muted, #626e66); font-size: 15px; font-weight: 600; letter-spacing: .01em; }
+.p-voice-microphone { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; margin-top: -12px; color: var(--p-muted, #626e66); font-size: 13px; }
+.p-voice-microphone > span:not(.sr-only) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.p-voice-microphone select { max-width: min(320px, 70vw); min-height: 36px; padding: 0 28px 0 10px; border: 1px solid var(--p-line, #e2e5df); border-radius: 999px; background: var(--p-surface, #fff); color: var(--p-ink, #292f2c); font: inherit; text-overflow: ellipsis; cursor: pointer; }
+.p-voice-microphone select:focus-visible { outline: 3px solid var(--p-focus, #88ab64); outline-offset: 1px; }
 .p-voice-transcript { display: grid; gap: 10px; min-height: 96px; width: 100%; }
 .p-voice-transcript p { margin: 0; }
 .p-voice-heard { font-size: 20px; line-height: 1.4; color: var(--p-ink, #292f2c); }

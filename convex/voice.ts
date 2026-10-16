@@ -112,15 +112,23 @@ async function respond(ctx: Ctx, token: string, start: Family, turns: VoiceTurn[
       if (response.stop_reason !== 'tool_use' || !uses.length) return done(spoken(response) || (changes.length ? 'Done.' : 'Sorry, I didn\'t catch that. Could you say it again?'))
       messages.push({ role: 'assistant', content: response.content })
       const results: Anthropic.ToolResultBlockParam[] = []
+      // Haiku sometimes repeats the identical call in one reply; run it once and give the copy the same result.
+      const seen = new Map<string, Anthropic.ToolResultBlockParam>()
       let failed = false
       for (const use of uses) {
+        const title = use.name === 'add_quest' && typeof use.input === 'object' && use.input !== null && 'title' in use.input && typeof use.input.title === 'string' ? use.input.title.trim().toLowerCase() : null
+        const key = title === null ? `${use.name}:${JSON.stringify(use.input)}` : `add_quest:${title}`
+        const earlier = seen.get(key)
+        if (earlier) { results.push({ ...earlier, tool_use_id: use.id }); continue }
         const action = voiceAction(use.name, use.input, { family, now: Date.now() })
-        if ('error' in action) { failed = true; results.push({ type: 'tool_result', tool_use_id: use.id, content: action.error, is_error: true }); continue }
+        const record = (result: Anthropic.ToolResultBlockParam) => { seen.set(key, result); results.push(result) }
+        if ('unchanged' in action) { record({ type: 'tool_result', tool_use_id: use.id, content: `${action.unchanged} Nothing needed changing.` }); continue }
+        if ('error' in action) { failed = true; record({ type: 'tool_result', tool_use_id: use.id, content: action.error, is_error: true }); continue }
         const result = await ctx.runMutation(commandRef, { token, role: 'parent', command: action.command, clientVersion: CLIENT_VERSION })
-        if (!result.ok) { failed = true; results.push({ type: 'tool_result', tool_use_id: use.id, content: result.message, is_error: true }); continue }
+        if (!result.ok) { failed = true; record({ type: 'tool_result', tool_use_id: use.id, content: result.message, is_error: true }); continue }
         changes.push(action.summary)
         family = await readFamily(ctx, token) ?? family
-        results.push({ type: 'tool_result', tool_use_id: use.id, content: `Done. ${action.summary}.` })
+        record({ type: 'tool_result', tool_use_id: use.id, content: `Done. ${action.summary}.${action.note ? ` ${action.note}` : ''}` })
       }
       // The confirmation was written alongside the tool calls, so when everything worked there is no need for a second round trip.
       const confirmation = spoken(response)

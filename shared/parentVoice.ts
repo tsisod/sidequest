@@ -1,6 +1,6 @@
 import type { DateKey, Family, FamilyCommand, Place, Quest, Schedule, TaskTemplate, Weekday } from './domain.ts'
-import { dateAt, parseDateKey } from './calendar.ts'
-import { isRecord, parsePlace, projectDay } from './sidequest.ts'
+import { addDays, dateAt, parseDateKey, weekdayOf } from './calendar.ts'
+import { isRecord, parsePlace, projectDay, scheduledOn } from './sidequest.ts'
 import { parseAlarmTime } from './wakeAlarm.ts'
 
 export const MAX_VOICE_TURNS = 16
@@ -38,6 +38,8 @@ Adding quests:
 - Place: library for reading, homework and learning; cottage for chores, tidying, hygiene and helping at home; chores for exercise, sport and outdoor play (it is the blacksmith's training yard).
 - If the parent names no reward: quick tasks 25 XP and 2 gold, medium tasks 50 XP and 4 gold, big tasks 75 XP and 5 gold. XP must be 1 to 500 and gold 1 to 100.
 
+Only make the changes the parent asked for in their latest message, with one tool call per change. Never call a tool to check, repeat or restate something that is already true. Don't talk about the tool calls themselves (how many you made, retries or ids); just say what changed, or why something couldn't be done.
+
 Quest and task ids come only from the family state; never invent one. When a request could match more than one quest or task, ask one short question instead of guessing. If a tool returns an error, say briefly what went wrong. If Sidequest cannot do what was asked, say so in one sentence. If the parent is chatting or saying thanks, answer briefly and warmly.`
 
 const placeNames: Record<Place, string> = { library: 'library (learning)', cottage: 'cottage (chores at home)', chores: 'training yard (exercise)' }
@@ -68,7 +70,8 @@ export function voiceBriefing(family: Family, now: number): string {
   ].join('\n')
 }
 
-export type VoiceAction = { command: FamilyCommand; summary: string } | { error: string }
+/** `summary` is shown to the parent; `note` is extra detail only the assistant needs, like a new task's id. `unchanged` means it is already so. */
+export type VoiceAction = { command: FamilyCommand; summary: string; note?: string } | { unchanged: string } | { error: string }
 type Input = Record<string, unknown>
 
 const text = (input: Input, key: string) => typeof input[key] === 'string' ? input[key].trim() : ''
@@ -96,7 +99,16 @@ function addTask(input: Input, family: Family, now: number): VoiceAction {
     schedule = { kind: 'once', date }
   } else return { error: 'Repeat must be once, daily or weekly.' }
   const when = schedule.kind === 'once' ? schedule.date === today ? 'today' : `on ${schedule.date}` : scheduleText(schedule).replace(/ from .*$/, '')
-  return { command: { kind: 'add-template', id: `${slug(title)}-${now.toString(36)}`, title, xp, gold, place, schedule }, summary: `Added "${title}" ${when}, ${xp} XP and ${gold} gold` }
+  // The assistant can fire the same request twice, and parents repeat themselves; one copy of a quest per day is enough.
+  const first = schedule.kind === 'once' ? schedule.date : schedule.kind === 'daily' ? today : firstWeekday(today, schedule.weekdays)
+  const twin = family.templates.find(template => template.title.trim().toLowerCase() === title.toLowerCase() && scheduledOn(template, first))
+  if (twin) return { error: `"${twin.title}" is already on ${family.childName}'s list for ${first === today ? 'today' : first} (task id "${twin.id}"), so nothing was added.` }
+  const id = `${slug(title)}-${now.toString(36)}`
+  return { command: { kind: 'add-template', id, title, xp, gold, place, schedule }, summary: `Added "${title}" ${when}, ${xp} XP and ${gold} gold`, note: `Its task id is "${id}".` }
+}
+function firstWeekday(from: DateKey, weekdays: readonly Weekday[]): DateKey {
+  for (let offset = 0; offset < 7; offset++) if (weekdays.includes(weekdayOf(addDays(from, offset)))) return addDays(from, offset)
+  return from
 }
 
 function findTask(family: Family, id: string): TaskTemplate | null { return family.templates.find(template => template.id === id) ?? null }
@@ -123,16 +135,19 @@ export function voiceAction(name: string, rawInput: unknown, { family, now }: { 
     }
     case 'pause_game':
       if (typeof input.paused !== 'boolean') return { error: 'Say whether the game should be paused.' }
+      if (input.paused === (family.clock.kind === 'blocked')) return { unchanged: `The game is already ${input.paused ? 'paused' : 'playable'}.` }
       return { command: { kind: 'set-blocked', blocked: input.paused }, summary: input.paused ? 'Paused the game' : 'Unpaused the game' }
     case 'set_wake_alarm': {
       if (typeof input.enabled !== 'boolean') return { error: 'Say whether the alarm should be on.' }
       const time = text(input, 'time') ? parseAlarmTime(text(input, 'time')) : family.wakeAlarm.time
       if (!time) return { error: 'Alarm times use 24-hour HH:MM, like 07:00.' }
+      if (input.enabled === family.wakeAlarm.enabled && time === family.wakeAlarm.time) return { unchanged: `The wake-up alarm is already ${input.enabled ? `on at ${time}` : 'off'}.` }
       return { command: { kind: 'set-wake-alarm', enabled: input.enabled, time }, summary: input.enabled ? `Wake-up alarm on at ${time}` : 'Wake-up alarm off' }
     }
     case 'rename_child': {
       const childName = text(input, 'name')
       if (!childName || childName.length > 24) return { error: 'Names must be 1 to 24 characters.' }
+      if (childName === family.childName) return { unchanged: `Your child is already called ${childName}.` }
       return { command: { kind: 'rename-child', name: childName }, summary: `Renamed your child to ${childName}` }
     }
     default: return { error: 'That tool is not available.' }

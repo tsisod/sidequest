@@ -13,7 +13,7 @@ function family(): Family {
 }
 function run(start: Family, name: string, input: unknown) {
   const action = voiceAction(name, input, { family: start, now: NOW })
-  assert.ok(!('error' in action), 'error' in action ? action.error : '')
+  assert.ok('command' in action, JSON.stringify(action))
   const outcome = applyCommand(start, action.command, { role: 'parent', now: NOW })
   return { ...outcome, summary: action.summary }
 }
@@ -52,6 +52,30 @@ test('repeating, future and clamped quests', () => {
   assert.match(tomorrow.summary, /on 2026-10-17/)
   const big = run(family(), 'add_quest', { ...shower, xp: 9000, gold: 0.4 })
   assert.deepEqual({ xp: big.family.templates.at(-1)?.xp, gold: big.family.templates.at(-1)?.gold }, { xp: 500, gold: 1 })
+})
+
+test('the same quest is not added twice for one day, and the new task id is passed back', () => {
+  const once = run(family(), 'add_quest', shower)
+  const again = voiceAction('add_quest', { ...shower, title: ' take a SHOWER ' }, { family: once.family, now: NOW })
+  assert.ok('error' in again && /already on Alex's list for today .*nothing was added/.test(again.error), JSON.stringify(again))
+  const tomorrow = voiceAction('add_quest', { ...shower, date: '2026-10-17' }, { family: once.family, now: NOW })
+  assert.ok(!('error' in tomorrow), 'a different day is fine')
+  assert.ok('error' in voiceAction('add_quest', { ...shower, title: 'Read for 20 minutes', place: 'library', repeat: 'daily' }, { family: once.family, now: NOW }), 'already a daily quest')
+  const action = voiceAction('add_quest', { ...shower, title: 'Feed the dog' }, { family: family(), now: NOW })
+  assert.ok('command' in action && action.command.kind === 'add-template' && action.note === `Its task id is "${action.command.id}".`)
+})
+
+test('asking for what is already true changes nothing', () => {
+  const start = family()
+  const check = (name: string, input: unknown, pattern: RegExp) => {
+    const action = voiceAction(name, input, { family: start, now: NOW })
+    assert.ok('unchanged' in action && pattern.test(action.unchanged), `${name} ${JSON.stringify(action)}`)
+  }
+  check('pause_game', { paused: false }, /already playable/)
+  check('set_wake_alarm', { enabled: false, time: '' }, /already off/)
+  check('rename_child', { name: 'Alex' }, /already called Alex/)
+  const paused = run(start, 'pause_game', { paused: true }).family
+  assert.ok('unchanged' in voiceAction('pause_game', { paused: true }, { family: paused, now: NOW }))
 })
 
 test('bad quest requests come back as errors the assistant can explain', () => {

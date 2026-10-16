@@ -2,7 +2,7 @@ import type { DateKey, EventReminder, Family, Place, Quest } from './domain.ts'
 import { addDays } from './calendar.ts'
 import { gameActions, keyLabel } from './keybinds.ts'
 import type { GameAction, Keybinds } from './keybinds.ts'
-import { earnedGold, earnedXp, eventsOn, isRecord, projectDay, remainingMs, screenUnlocked } from './sidequest.ts'
+import { earnedGold, earnedXp, eventsOn, isRecord, levelProgress, projectDay, remainingMs, screenUnlocked } from './sidequest.ts'
 import type { Voice } from './speech.ts'
 import { wakePhase } from './wakeAlarm.ts'
 
@@ -63,7 +63,7 @@ How you talk
 How Sidequest works
 - A parent uses a separate parent dashboard. Only the parent can create, change or remove quests, choose rewards, approve or return finished quests, set the daily screen time, pause play, set the wake-up alarm time or change the child's name.
 - Quests are real-life tasks for today. Each one comes from a villager: study tasks such as reading, homework and practice come from Ambrose the librarian, the old man outside the library; chores come from Poppy the housekeeper, the girl with the butterfly by the cottage; exercise comes from Bram the blacksmith. A red number above a villager shows how many of their quests today are still to do. A quest leaves the count when the child sends it for approval and comes back if the parent sends it back. The number disappears when none are left; villagers without quests have no marker. The child talks to a villager by standing next to them and pressing the Interact key, or by clicking or tapping the number.
-- When the child finishes a quest in real life, they send it to their parent for approval: "I did it!" in the villager's chat, the Journal at the top of the screen, or by telling you. A sent quest waits until the parent approves it. Approval gives the quest's XP and gold. Every 100 XP is a new level. A parent can send a quest back if it is not finished yet; it becomes a to-do again.
+- When the child finishes a quest in real life, they send it to their parent for approval: "I did it!" in the villager's chat, the Journal at the top of the screen, or by telling you. A sent quest waits until the parent approves it. Approval gives the quest's XP and gold. Each level takes more XP than the last: 100 XP to go from level 1 to 2, 150 from 2 to 3, and 50 more for every level after that. A parent can send a quest back if it is not finished yet; it becomes a to-do again.
 - The Journal button lists today's quests and how many are done.
 - Screen time unlocks each day only after every one of today's quests is approved. Then the child starts or pauses the countdown with the play button on the screen-time panel at the top. If a parent adds another quest today, the clock locks again until it is approved, and the remaining time is kept. Unused time ends at midnight. A parent can pause play: walking stops, but the Journal still works. The countdown only tracks Sidequest's allowance; it does not control other apps.
 - Other villagers just like to chat: Biscuit the dog by the cottage (mostly says woof), Gill the angler at the lake and Hazel the gardener in the field.
@@ -132,6 +132,7 @@ export function sparkBriefing(family: Family, now: number, { name, keybinds }: {
   const dayName = (date: DateKey) => new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(Date.parse(`${date}T12:00:00Z`))
   const today = projectDay(family, family.sessionDay).quests
   const xp = earnedXp(family)
+  const progress = levelProgress(xp)
   const upcoming = [1, 2, 3, 4, 5, 6, 7].map(offset => addDays(family.sessionDay, offset)).map(date => ({ date, quests: projectDay(family, date).quests })).filter(day => day.quests.length)
   const calendar = [0, 1, 2, 3, 4, 5, 6, 7].map(offset => addDays(family.sessionDay, offset)).map(date => ({ date, events: eventsOn(family, date) })).filter(day => day.events.length)
   const controls = gameActions.map(({ action }) => `${actionNames[action]}: ${keyLabel(keybinds[action])}`).join(', ')
@@ -140,7 +141,7 @@ export function sparkBriefing(family: Family, now: number, { name, keybinds }: {
     `Your name: ${name}.`,
     `Child's name: ${family.childName}.`,
     `Household date and time: ${longDate.format(now)}.`,
-    `Progress: level ${1 + Math.floor(xp / 100)}, ${xp % 100} of 100 XP toward the next level, ${xp} XP and ${earnedGold(family)} gold earned in total.`,
+    `Progress: level ${progress.level}, ${progress.into} of ${progress.needed} XP toward the next level, ${xp} XP and ${earnedGold(family)} gold earned in total.`,
     today.length ? `Today's quests:\n${today.map(quest => `- id ${quest.id}: "${quest.title}", ${placeNames[quest.place]}, +${quest.xp} XP and +${quest.gold} gold, ${statusNames[quest.status]}`).join('\n')}` : 'Today\'s quests: none.',
     `Screen time: ${screenTime(family, now)}`,
     upcoming.length ? `Coming up:\n${upcoming.map(day => `- ${dayName(day.date)}: ${day.quests.map(quest => `"${quest.title}"`).join(', ')}`).join('\n')}` : 'Coming up: no quests scheduled in the next week yet.',

@@ -68,6 +68,13 @@ export function questEarnings(family: Family): { xp: number; gold: number } {
   return family.quests.reduce((sum, quest) => quest.status === 'approved' ? { xp: sum.xp + quest.xp, gold: sum.gold + quest.gold } : sum, { xp: 0, gold: 0 })
 }
 export function earnedXp(family: Family): number { return questEarnings(family).xp + family.wakeAlarm.results.reduce((sum, result) => sum + result.xp, 0) }
+export const xpToLevelUp = (level: number): number => 100 + 50 * (level - 1)
+export function levelProgress(xp: number): { level: number; into: number; needed: number } {
+  let level = 1
+  let into = Math.max(0, Math.floor(xp))
+  while (into >= xpToLevelUp(level)) { into -= xpToLevelUp(level); level++ }
+  return { level, into, needed: xpToLevelUp(level) }
+}
 export function earnedGold(family: Family): number { return questEarnings(family).gold + family.wakeAlarm.results.reduce((sum, result) => sum + result.gold, 0) }
 /** A late wake-up can only take gold the child already has, so the balance never drops below zero. */
 export function wakeRewardFor(family: Family, scheduledAt: number, wokeAt: number): { xp: number; gold: number } {

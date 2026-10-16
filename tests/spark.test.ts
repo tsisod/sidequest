@@ -41,7 +41,7 @@ test('the briefing follows submissions, approvals and parent pauses', () => {
     if (quest.status === 'todo') family = run(family, { kind: 'submit', questId: quest.id }, 'child')
     family = run(family, { kind: 'approve', questId: quest.id }, 'parent')
   }
-  assert.match(briefing(family), /Progress: level 2, 50 of 100 XP toward the next level, 150 XP and 11 gold earned in total\./)
+  assert.match(briefing(family), /Progress: level 2, 50 of 150 XP toward the next level, 150 XP and 11 gold earned in total\./)
   assert.match(briefing(family), /Screen time: Unlocked with 20 minutes left, paused until the child presses play\./)
   family = run(family, { kind: 'set-blocked', blocked: true }, 'parent')
   assert.match(briefing(family), /Screen time: Play is paused by the parent\./)

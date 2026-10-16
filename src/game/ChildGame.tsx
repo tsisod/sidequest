@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useEffectEvent, useRef, useState, useSyncExternalStore } from 'react'
 import type { ActionResult, Family, FamilyCommand, Place, Quest } from '../../shared/domain'
-import { earnedGold, earnedXp, eventReminders, projectDay, questEarnings } from '../../shared/sidequest'
+import { earnedGold, earnedXp, eventReminders, levelProgress, projectDay, questEarnings } from '../../shared/sidequest'
 import { RewardCelebration } from '../components/RewardCelebration'
 import { coin } from '../components/pixelArt'
 import { Pixels } from '../components/Pixels'
@@ -105,8 +105,7 @@ export default function ChildGame({ family, now, onCommand, onSpeak, onAsk, onHe
   const todaysQuests = projectDay(family, family.sessionDay).quests
   const xp = earnedXp(family)
   const gold = earnedGold(family)
-  const level = 1 + Math.floor(xp / 100)
-  const currentXp = xp % 100
+  const { level, into: currentXp, needed: levelXp } = levelProgress(xp)
   const questTotals = questEarnings(family)
   const soundStatus = useSyncExternalStore(sounds.subscribe, sounds.getStatus)
   const visible = useSyncExternalStore(subscribeVisibility, pageVisible)
@@ -140,7 +139,7 @@ export default function ChildGame({ family, now, onCommand, onSpeak, onAsk, onHe
     <div className="child-world"><PixelWorld canMove={!blocked} now={now} timeZone={family.timeZone} openQuests={openQuests} keybinds={keybinds} onTalk={talkTo} /></div>
 
     <header className="game-hud">
-      <div className="game-player game-panel"><img src="/assets/farm/farmer-idle-down.png" alt="" /><div className="game-player-info"><strong><span className="game-player-name">{family.childName}</span><span className="game-player-level">Lv {level}</span></strong><progress value={currentXp} max={100} aria-label={`Level progress, ${currentXp} of 100 XP`} /><span className="game-player-xp">{currentXp} / 100 XP</span></div><div className="game-wallet" aria-label={`${gold} gold`}><Icon name="coin" size={18} /><span>{gold}</span></div></div>
+      <div className="game-player game-panel"><img src="/assets/farm/farmer-idle-down.png" alt="" /><div className="game-player-info"><strong><span className="game-player-name">{family.childName}</span><span className="game-player-level">Lv {level}</span></strong><progress value={currentXp} max={levelXp} aria-label={`Level progress, ${currentXp} of ${levelXp} XP`} /><span className="game-player-xp">{currentXp} / {levelXp} XP</span></div><div className="game-wallet" aria-label={`${gold} gold`}><Icon name="coin" size={18} /><span>{gold}</span></div></div>
       <div className="game-hud-right">
         <button type="button" className="game-spark game-panel" onClick={openSpark} aria-label={`Talk to ${spark.name}, your AI helper${unseenReminders.length ? ', new reminder' : ''}`} aria-haspopup="dialog"><span className="game-spark-avatar" aria-hidden="true"><img src="/assets/learnspace-ui/spark-preview.png" alt="" width={48} height={48} /></span><span>Ask<strong>{spark.name}</strong></span>{unseenReminders.length > 0 && <span className="game-spark-alert" aria-hidden="true">!</span>}</button>
         <button type="button" className="game-journal game-panel" onClick={() => { sounds.play('open'); journalDialog.current?.showModal() }} aria-label={`Quest journal, ${finished} of ${todaysQuests.length} done`}><Icon name="book" size={20} /><span>Journal<strong>{finished}/{todaysQuests.length}</strong></span></button>

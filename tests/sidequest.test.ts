@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { Family, FamilyCommand, Role, Schedule } from '../shared/domain.ts'
 import { addDays, nextDayBoundary, parseTimeZone } from '../shared/calendar.ts'
-import { applyCommand, createFamily, earnedGold, earnedXp, familyWithinSizeLimit, parseFamily, parseSchedule, projectDay, reconcileFamily, remainingMs, scheduledOn, screenUnlocked } from '../shared/sidequest.ts'
+import { applyCommand, createFamily, earnedGold, earnedXp, familyWithinSizeLimit, levelProgress, parseFamily, parseSchedule, projectDay, reconcileFamily, remainingMs, scheduledOn, screenUnlocked, xpToLevelUp } from '../shared/sidequest.ts'
 
 const NOW = Date.parse('2026-10-15T03:00:00.000Z')
 const MINUTE = 60_000
@@ -207,4 +207,21 @@ test('new families get one task in each category and older garden tasks load as 
   const legacyAdd = run(family, { ...added('rake', { kind: 'daily', from: family.sessionDay }), place: 'garden' } as unknown as FamilyCommand, 'parent')
   assert.equal(legacyAdd.result.ok, true)
   assert.equal(legacyAdd.family.templates.find(template => template.id === 'rake')?.place, 'cottage')
+})
+
+test('each level needs 50 more XP than the one before, starting at 100', () => {
+  assert.deepEqual([1, 2, 3, 4, 10].map(xpToLevelUp), [100, 150, 200, 250, 550])
+  const at = (xp: number) => levelProgress(xp)
+  assert.deepEqual(at(0), { level: 1, into: 0, needed: 100 })
+  assert.deepEqual(at(99), { level: 1, into: 99, needed: 100 })
+  assert.deepEqual(at(100), { level: 2, into: 0, needed: 150 })
+  assert.deepEqual(at(249), { level: 2, into: 149, needed: 150 })
+  assert.deepEqual(at(250), { level: 3, into: 0, needed: 200 })
+  assert.deepEqual(at(450), { level: 4, into: 0, needed: 250 })
+  assert.deepEqual(at(-20), { level: 1, into: 0, needed: 100 })
+  const total = (level: number) => 100 * (level - 1) + 25 * (level - 1) * (level - 2)
+  for (const level of [2, 5, 20, 199]) {
+    assert.deepEqual(at(total(level)), { level, into: 0, needed: xpToLevelUp(level) })
+    assert.equal(at(total(level) - 1).level, level - 1)
+  }
 })

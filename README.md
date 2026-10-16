@@ -12,13 +12,17 @@ pnpm dev --port 5173
 ```
 
 - http://localhost:5173/parents opens the parent dashboard.
-- http://localhost:5173/ opens directly into the child's full-screen game. Walk with WASD or arrow keys, jump with Space, and interact with E near a location. Touch controls include a Jump button. A bouncing red number above a villager shows how many of their quests today are still to do. Click it or press E beside them to talk. A quest leaves the count once it is submitted, and comes back if a parent sends it back. The number disappears when none are left. Villagers without quests have no marker; stand beside them and press E to chat. The **Journal** button at the top lists all of today's quests. Press Esc to open the menu, or tap the gear button on touch screens. It holds the **Alarm clock**, **Keybinds**, **Settings** (villager voices) and **AI helper**. Keybinds change the walk, jump, interact and AI helper keys to any letter, number, symbol or Space; arrow keys always walk. Choosing a key that another action uses swaps the two. Keybinds are saved on that browser. The game screen shows no on-screen key tips; the Keybinds page lists every key. The child interface has no parent dashboard link; open `/parents` directly.
+- http://localhost:5173/ opens directly into the child's full-screen game. Walk with WASD or arrow keys, hold Shift to sprint, jump with Space, and interact with E near a location. The hero can also wade into the lake and swim, more slowly and without jumping. A key hints panel in the bottom-left corner lists the current keys; H hides it completely and brings it back. Touch screens show arrow buttons and a Jump button instead. A bouncing red number above a villager shows how many of their quests today are still to do. Click it or press E beside them to talk. A quest leaves the count once it is submitted, and comes back if a parent sends it back. The number disappears when none are left. Villagers without quests have no marker; stand beside them and press E to chat. The **Journal** button at the top lists all of today's quests. Press Esc to open the menu, or tap the gear button on touch screens. It holds the **Alarm clock**, **Calendar**, **Keybinds**, **Settings** (villager voices and sound effects) and **AI helper**. Keybinds change the walk, sprint, jump, interact, AI helper and key hints keys to any letter, number, symbol, Space or Shift; arrow keys always walk. Choosing a key that another action uses swaps the two. Keybinds are saved on that browser, and a saved set keeps every key when a new action is added. The child interface has no parent dashboard link; open `/parents` directly.
 
-Parents assign study, chores or exercise with XP and gold rewards. Children submit finished quests. Parent approval awards each dated quest's rewards once. When all of today's quests are approved, the daily screen-time allowance unlocks. The child can start or pause the countdown. Adding work today locks the clock until it is finished, preserving the remaining balance without granting a second allowance.
+Parents assign study, chores or exercise with XP and gold rewards. Children submit finished quests. Parent approval awards each dated quest's rewards once. XP raises the child's level: level 1 needs 100 XP to reach level 2, and each level after needs 50 more than the one before (150, 200, 250…). When all of today's quests are approved, the daily screen-time allowance unlocks. The child can start or pause the countdown. Adding work today locks the clock until it is finished, preserving the remaining balance without granting a second allowance.
 
-The parent calendar supports one-time tasks, daily tasks, and weekly tasks on selected weekdays. Future assignments do not block today. Past submissions remain available for review, while the child's journal shows today's quests. Household dates use the timezone recorded when the family was created. A new day resets the allowance and creates fresh recurring quests. Unused time expires at midnight; parent blocking stays active.
+Quest schedules support one-time tasks, daily tasks, and weekly tasks on selected weekdays. Future assignments do not block today. Past submissions remain available for review, while the child's journal shows today's quests. Household dates use the timezone recorded when the family was created. A new day resets the allowance and creates fresh recurring quests. Unused time expires at midnight; parent blocking stays active.
 
 The parent dashboard has Sage, Apricot, and Cocoa themes. The selection is saved on that browser. There is one child and a small village with three villagers who hand out quests (Poppy the housekeeper, Ambrose the librarian and Bram the blacksmith) and three who just like to chat (Biscuit the dog, Gill the angler and Hazel the gardener).
+
+## Family calendar
+
+The parent dashboard's **Calendar** page (`/parents/calendar`) shows one month at a time; ‹ and › change the month. Tap today or a later day to add an event that happens once, every day, or every week on that weekday. Earlier days are read-only. The child sees the same calendar in the game menu's **Calendar** page and can add events too, but can delete only their own; the backend refuses a child's attempt to delete a parent's event. The day before an event, a red ! appears on the **Ask Spark** button with a chime, and opening Spark reminds the child what is on tomorrow. Events are stored on the family board, so boards saved before the calendar existed load with an empty calendar.
 
 ## Villagers
 
@@ -44,6 +48,8 @@ Spark is a small fairy that floats beside the child's character. Press Q, or the
 
 Spark can read the child's game: today's quests and their status, the next week's quests, XP, level, gold, screen time, the alarm and this device's keys. It has one tool, which sends one of today's to-do quests for approval. The Convex action `spark:ask` accepts only a linked child device's token. The tool runs `spark:submit`, an internal mutation that applies the child's `submit` command and nothing else. Spark cannot approve or change quests, rewards, screen time, the alarm or anything on the parent dashboard.
 
+The chat box has a split button: the microphone on the left records the child's message, and **Send** sends what they typed. Recording stops by itself when the child pauses. The Convex action `spark:hear`, which accepts only a linked child device's token, turns the recording into text with ElevenLabs speech-to-text, and the text then goes through `spark:ask` like a typed message, so the same safety checks apply.
+
 The menu's **AI helper** page changes Spark's name and voice: Matilda (Spark's Learnspace voice, the default), Will, Alice, Liam, River or Callum, each with a preview. The name and voice are saved on that browser. Spark's sprite and portrait are Learnspace's original Spark art, imported with `scripts/import-learnspace-ui.py`.
 
 Spark uses Claude (`claude-opus-5-5`, low effort, with Anthropic's default refusal fallback) through the Anthropic TypeScript SDK. Each message sends the child's name, the family's quest titles and status, and the conversation to Anthropic. Replies are spoken with ElevenLabs like the villagers, so each new reply is billed once. Set the key on each Convex deployment; it never reaches the browser:
@@ -64,6 +70,10 @@ The checks fail closed. If either check errors, times out or returns an unexpect
 
 Flagged chats go to the parent **Inbox** at `/parents/inbox`, opened from the Inbox link in the dashboard's top navigation. The link shows how many alerts are new. Each alert shows the child's message, when it was sent and what Spark did. Its label is one of: "May need your help" (the child may be unsafe), "Inappropriate request" (the message or Opus was refused), or "Spark answer held back" (a reply that failed its check, which the parent can expand). If the child says a parent or caregiver at home is the one hurting them, no alert is sent, and Spark tells the child to talk to a teacher or another relative instead. Opening the inbox marks alerts as read. The parent can remove any alert. Alerts are stored in the Convex `sparkAlerts` table, and only the latest 100 per family are kept. Only a parent token can read or change them, through `spark:inbox` and `spark:editInbox`. The child's AI helper page tells the child that worrying messages are shared with their parent.
 
+## Parent voice commands
+
+The microphone button beside **Add quest** opens a voice conversation. The parent says a request such as "Add brush teeth for Alex every day". The Convex action `voice:listen` transcribes it with ElevenLabs speech-to-text (Scribe), and Claude Haiku 5.5 turns it into the same commands the dashboard buttons send. The reply is spoken aloud, then the assistant listens again; typing works too. A menu under the circle picks the microphone, and the choice is saved on that device and shared with Spark's microphone. If the microphone sends pure silence (muted, input volume at zero, or the wrong device), the assistant names it instead of uploading the silence. The ElevenLabs key needs the Speech to Text permission.
+
 ## Daily wake-up alarm
 
 The alarm is separate from quests, XP, gold, and screen-time allowances. Parents set a daily time in the household timezone. Every family has an alarm control, initially off with a 7:00 AM default. Saving a passed time schedules the next day.
@@ -73,6 +83,10 @@ In the game menu's **Alarm clock** page, children choose Classic bells, Morning 
 Keep the child page open with sound enabled. The optional screen wake lock can keep a visible page awake. A closed page cannot ring, and browsers may suspend audio or delay timers while hidden or asleep. This website is not a reliable replacement for an operating-system alarm. See [browser autoplay rules](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay) and [Chrome background timer behavior](https://developer.chrome.com/blog/timer-throttling-in-chrome-88).
 
 Parents can disable or reschedule the alarm. Completed game submissions identify the scheduled run, so a delayed submission cannot dismiss a rescheduled alarm. Repeat submissions preserve the original completion time. Alarm-only commands do not change the quest board or play clock.
+
+## Sound effects
+
+The game plays short chiptune sounds, synthesised in the browser from `src/sound/effects.ts`, for rewards, mini-games, menus, dialogue, Spark, the calendar, jumping and swimming. **Settings** → **Sound effects** turns them off on that browser. Browsers allow sound only after the page has been tapped or a key pressed, so a quest reward that arrives before then waits behind a **Tap to collect** button, and one that arrives while the tab is hidden waits until it is visible.
 
 ## Linking the views
 
@@ -96,7 +110,7 @@ The village uses the supplied **Farm - 4 Seasons 16x16 Tileset** and **NPC - Cha
 
 Re-import the selected files with `python3 scripts/import-game-assets.py`, or pass another archive directory as its first argument. The script uses Python's standard library and copies the original bytes. These are user-supplied commercial assets; retain their original purchase terms.
 
-`src/game/world.ts` defines the 64 × 40 tile map as ASCII terrain rows, the props and villagers with their collision footprints, the fenced field and gate, and the quest doors. The art packs have no forge, so `src/game/forge.ts` draws Bram's stone forge beside him in the same palette. It has a flickering fire, chimney smoke, a coal heap, a water trough, snow in winter and a warm glow at night. `src/game/effects.ts` animates the hero and Spark. The hero breathes while standing, stretches in the air, squashes on landing and kicks up dust. Spark bobs, drifts around the hero while they stand still, glows more at night and leaves a twinkle trail. Devices that ask for reduced motion get none of these effects. `src/game/farmArt.ts` maps every prop and ground tile to atlas crops for each season, and `src/game/farmScene.ts` draws cached terrain, shorelines and depth-sorted sprites. Update `world.ts` when changing the layout; `tests/world.test.ts` checks that every door and the field stay reachable from the start.
+`src/game/world.ts` defines the 64 × 40 tile map as ASCII terrain rows, the props and villagers with their collision footprints, the fenced field and gate, and the quest doors. The art packs have no forge, so `src/game/forge.ts` draws Bram's stone forge beside him in the same palette. It has a flickering fire, chimney smoke, a coal heap, a water trough, snow in winter and a warm glow at night. Water is walkable: once the hero is fully in the lake, `farmScene.ts` draws them head and shoulders above the water with ripples, a wake and splashes. `src/game/effects.ts` animates the hero and Spark. The hero breathes while standing, stretches in the air, squashes on landing and kicks up dust. Spark bobs, drifts around the hero while they stand still, glows more at night and leaves a twinkle trail. Devices that ask for reduced motion get none of these effects. `src/game/farmArt.ts` maps every prop and ground tile to atlas crops for each season, and `src/game/farmScene.ts` draws cached terrain, shorelines and depth-sorted sprites. Update `world.ts` when changing the layout; `tests/world.test.ts` checks that every door and the field stay reachable from the start.
 
 The village follows the household's real calendar and clock. `src/game/sky.ts` picks the season from the month in the household time zone, flipping it for southern-hemisphere zones, and tints the scene for dawn, dusk and night with lit windows. During development, add `?season=winter&hour=21.5` to the game URL to preview any season and hour. `PixelWorld.tsx` owns keyboard, touch and click movement independently from shared rewards and the clock. Children can explore immediately, including before screen time unlocks and while the countdown is paused or finished. Parent blocking disables movement; the journal stays accessible. The screen-time countdown separately requires every assigned quest to be approved and an explicit start.
 
@@ -110,7 +124,7 @@ Local fonts are Manrope and Pixelify Sans. Their OFL licenses are in `public/fon
 pnpm check
 ```
 
-Runs lint, calendar/reward/clock/role/migration and world-geometry tests, TypeScript checks for frontend/backend/tests, and the production build. Domain logic is in `shared/sidequest.ts`, with timezone-aware date helpers in `shared/calendar.ts`. UI controls send commands rather than changing rewards themselves.
+Runs lint, calendar/event/reward/level/clock/role/migration, keybind, sound, speech turn-detection and world-geometry tests, TypeScript checks for frontend/backend/tests, and the production build. Domain logic is in `shared/sidequest.ts`, with timezone-aware date helpers in `shared/calendar.ts`. UI controls send commands rather than changing rewards themselves.
 
 To check a hosted backend explicitly:
 
@@ -138,17 +152,15 @@ python3 scripts/verify-schedule-migration.py before.zip after.zip
 
 ## Deploy
 
-The deployed app is at https://sidequest-time-manager.vercel.app/ and the parent dashboard is at https://sidequest-time-manager.vercel.app/parents. Use **Link a device** in the parent dashboard to pair a child's browser.
-
-This directory is linked to Vercel project `timbo-hobby/sidequest-time-manager`. Its sensitive production environment variable `CONVEX_DEPLOY_KEY` targets Convex project `marchantresearch/sidequest`, deployment `shiny-chameleon-14`. Local development uses the separate `peaceful-mongoose-27` deployment through `.env.local`.
-
-Deploy later changes from this directory with:
+Production deploys from GitHub. Every push to `main` on `github.com/tsisod/sidequest` builds Vercel project `my-3e89/sidequest`. Its production environment variable `CONVEX_DEPLOY_KEY` targets Convex project `marchantresearch/sidequest`, deployment `shiny-chameleon-14`, so `vercel.json`'s `pnpm build:vercel` deploys the backend first and supplies its URL to the frontend build. The Vercel project uses Node.js 24.
 
 ```sh
 pnpm check
-pnpm dlx vercel@64.2.0 deploy --prod --scope timbo-hobby
+git push origin main
 ```
 
-`vercel.json` runs `pnpm build:vercel`; Convex deploys the backend and supplies the production URL to the frontend build. The Vercel project uses Node.js 24. Environment files and local audit records are excluded from uploads. There is no Git repository or automatic push deployment configured yet.
+Local development uses the separate `peaceful-mongoose-27` deployment through `.env.local`. `pnpm dev` does not update it; push backend changes there with `npx convex dev --once`, or keep `pnpm dev:backend` running.
 
-The only third-party key is the optional `ELEVENLABS_API_KEY` for Bram's voice. See the [Convex Vercel guide](https://docs.convex.dev/production/hosting/vercel).
+The older Vercel project `timbo-hobby/sidequest-time-manager` (https://sidequest-time-manager.vercel.app/) is no longer updated and serves an outdated frontend against the same backend. Use **Link a device** in the parent dashboard to pair a child's browser.
+
+Set third-party keys on each Convex deployment with `npx convex env set` (add `--prod` for production): `ELEVENLABS_API_KEY` for villager and Spark voices and for speech-to-text, with the Text to Speech and Speech to Text permissions, and `ANTHROPIC_API_KEY` for Spark and parent voice commands. See the [Convex Vercel guide](https://docs.convex.dev/production/hosting/vercel).

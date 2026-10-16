@@ -60,8 +60,8 @@
 .p-app .cal-plan-repeat label:has(input:focus-visible) { outline: 2px solid var(--p-focus); outline-offset: 2px; }
 .p-app .cal-plan-preview { padding: 10px 14px; border-radius: 10px; background: var(--p-accent-soft); color: var(--p-accent-ink); font-size: 13px; line-height: 1.6; }
 .p-app .cal-plan-error { padding: 12px 14px; border-radius: 10px; background: var(--p-danger-bg); color: var(--p-danger-ink); font-size: 14px; line-height: 1.6; }
-.p-app .cal-plan-submit { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px 20px; border: 0; border-radius: 10px; background: linear-gradient(180deg, color-mix(in srgb, var(--p-primary) 84%, white), var(--p-primary)); color: var(--p-on-primary); box-shadow: 0 1px 2px var(--p-shadow-color); font-size: 14px; font-weight: 650; transition: background-color 100ms var(--ease-out), transform 100ms var(--ease-out); }
-.p-app .cal-plan-submit:hover:not(:disabled) { background: var(--p-primary); }
+.p-app .cal-plan-submit { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px 20px; border: 0; border-radius: 10px; background-color: var(--p-primary); background-image: linear-gradient(180deg, color-mix(in srgb, var(--p-primary) 84%, white), var(--p-primary)); color: var(--p-on-primary); box-shadow: 0 1px 2px var(--p-shadow-color); font-size: 14px; font-weight: 650; transition: background-color 100ms var(--ease-out), transform 100ms var(--ease-out); }
+.p-app .cal-plan-submit:hover:not(:disabled) { background-image: none; }
 .p-app .cal-plan-submit:active:not(:disabled) { transform: scale(.98); }
 
 @container cal (max-width: 600px) {

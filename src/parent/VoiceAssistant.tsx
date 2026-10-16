@@ -3,34 +3,19 @@ import type { FormEvent } from 'react'
 import { MAX_VOICE_TEXT, MAX_VOICE_TURNS } from '../../shared/parentVoice'
 import type { VoiceApi, VoiceReply, VoiceTurn } from '../../shared/parentVoice'
 import Icon from '../components/Icon'
-import { hear, soundsSilent, startHearing } from './hearing'
-import type { Hearing } from './hearing'
+import { hear, soundsSilent, startHearing } from '../voice/hearing'
+import type { Hearing } from '../voice/hearing'
+import { canRecord, finishRecording, MEASURED_MS, microphoneConstraints, savedMicrophone, saveMicrophone, startRecording } from '../voice/microphone'
+import type { Recording } from '../voice/microphone'
 import './voice.css'
 
 type Phase = 'starting' | 'listening' | 'thinking' | 'speaking' | 'idle'
 type Microphone = { id: string; label: string }
-type Recording = { recorder: MediaRecorder; chunks: Blob[] }
-
-const MICROPHONE_KEY = 'sidequest-voice-microphone-v1'
-const MEASURED_MS = 1_000
-
-function recordingType(): string {
-  if (typeof MediaRecorder === 'undefined') return ''
-  return ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'].find(type => MediaRecorder.isTypeSupported(type)) ?? ''
-}
 
 function pickVoice(lang: string): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis?.getVoices() ?? []
   const local = voices.filter(voice => voice.lang.startsWith(lang.slice(0, 2)))
   return local.find(voice => /Samantha|Google US|Natural|Enhanced|Premium/.test(voice.name)) ?? local[0] ?? null
-}
-
-function savedMicrophone(): string | null {
-  try { return localStorage.getItem(MICROPHONE_KEY) } catch { return null }
-}
-
-function microphoneConstraints(deviceId: string | null, exact = false): MediaStreamConstraints {
-  return { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, ...deviceId ? { deviceId: exact ? { exact: deviceId } : { ideal: deviceId } } : {} } }
 }
 
 const statusText: Record<Phase, string> = { starting: 'Getting the microphone…', listening: 'Listening…', thinking: 'Thinking…', speaking: 'Speaking…', idle: 'Tap the circle to talk' }
@@ -40,7 +25,6 @@ const statusText: Record<Phase, string> = { starting: 'Getting the microphone…
  * animates the orb and decides when the parent has finished, and its recording is transcribed and answered on the
  * server. The reply is spoken aloud, then it listens again.
  */
-const canRecord = () => typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia) && typeof MediaRecorder !== 'undefined'
 const noRecording = 'This browser can\'t use the microphone here. Type your request below instead.'
 
 export default function VoiceAssistant({ childName, voice, onClose }: { childName: string; voice: VoiceApi; onClose: () => void }) {
@@ -96,11 +80,7 @@ export default function VoiceAssistant({ childName, voice, onClose }: { childNam
   function stopRecording(): Promise<Blob | null> {
     const current = recording.current
     recording.current = null
-    if (!current || current.recorder.state === 'inactive') return Promise.resolve(null)
-    return new Promise(resolve => {
-      current.recorder.onstop = () => resolve(new Blob(current.chunks, { type: current.recorder.mimeType || recordingType() || 'audio/webm' }))
-      current.recorder.stop()
-    })
+    return current ? finishRecording(current) : Promise.resolve(null)
   }
 
   function startListening() {
@@ -110,14 +90,8 @@ export default function VoiceAssistant({ childName, voice, onClose }: { childNam
     window.speechSynthesis?.cancel()
     void stopRecording()
     wakeAudio()
-    const type = recordingType()
-    let recorder: MediaRecorder
-    try { recorder = type ? new MediaRecorder(media, { mimeType: type }) : new MediaRecorder(media) }
+    try { recording.current = startRecording(media) }
     catch { setProblem(noRecording); enter('idle'); return }
-    const chunks: Blob[] = []
-    recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data) }
-    recorder.start(250)
-    recording.current = { recorder, chunks }
     hearing.current = startHearing(performance.now(), hearing.current.floor)
     setProblem('')
     setNotice('')
@@ -206,7 +180,7 @@ export default function VoiceAssistant({ childName, voice, onClose }: { childNam
   }
 
   async function chooseMicrophone(id: string) {
-    try { localStorage.setItem(MICROPHONE_KEY, id) } catch { /* The choice lasts for this visit when storage is unavailable. */ }
+    saveMicrophone(id)
     void stopRecording()
     enter('starting')
     try {

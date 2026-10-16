@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { hear, soundsSilent, startHearing } from '../src/parent/hearing.ts'
-import type { HearingVerdict } from '../src/parent/hearing.ts'
+import { hear, soundsSilent, startHearing } from '../src/voice/hearing.ts'
+import type { HearingVerdict } from '../src/voice/hearing.ts'
 
 const FRAME_MS = 16
 function run(levels: { ms: number; rms: number; peak?: number }[]): { verdict: HearingVerdict; at: number; silent: boolean } {

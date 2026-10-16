@@ -3,7 +3,7 @@ import { ConvexClient } from 'convex/browser'
 import { makeFunctionReference } from 'convex/server'
 import type { ActionResult, ConnectionState, Family, FamilyCommand, FamilyConnection, Role } from '../../shared/domain.ts'
 import type { Speak, SpeechResult, Voice } from '../../shared/speech.ts'
-import type { AskSpark, SparkAlert, SparkInboxChange, SparkReply, SparkTurn } from '../../shared/spark.ts'
+import type { AskSpark, HearSpark, SparkAlert, SparkHeard, SparkInboxChange, SparkReply, SparkTurn } from '../../shared/spark.ts'
 import type { VoiceApi, VoiceTurn, VoiceReply } from '../../shared/parentVoice.ts'
 import { parseTimeZone } from '../../shared/calendar.ts'
 import { parseFamily } from '../../shared/sidequest.ts'
@@ -26,6 +26,7 @@ const speakRef = makeFunctionReference<'action', { token: string; text: string; 
 const inboxRef = makeFunctionReference<'query', { token: string }, SparkAlert[] | null>('spark:inbox')
 const editInboxRef = makeFunctionReference<'mutation', { token: string; change: SparkInboxChange }, ActionResult>('spark:editInbox')
 const askRef = makeFunctionReference<'action', { token: string; name: string; keybinds: Record<string, string>; turns: SparkTurn[] }, SparkReply>('spark:ask')
+const hearRef = makeFunctionReference<'action', { token: string; name: string; audio: ArrayBuffer; mimeType: string; language: string }, SparkHeard>('spark:hear')
 const voiceRef = makeFunctionReference<'action', { token: string; turns: VoiceTurn[] }, VoiceReply>('voice:command')
 const listenRef = makeFunctionReference<'action', { token: string; audio: ArrayBuffer; mimeType: string; language: string; earlier: VoiceTurn[] }, VoiceReply>('voice:listen')
 const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'Sidequest could not connect. Please try again.'
@@ -254,6 +255,13 @@ export function useSidequest(role: Role): FamilyConnection {
     catch (error) { return { ok: false, message: errorMessage(error) } }
   }, [mode, role])
 
+  const hear: HearSpark = useCallback(async ({ name, audio, mimeType, language }) => {
+    const saved = credentials.current
+    if (mode === 'local' || role !== 'child' || !saved) return { ok: false, message: `Talking to ${name} out loud needs a hosted family connection. You can type instead.` }
+    try { return await getClient().action(hearRef, { token: saved.token, name, audio, mimeType, language }) }
+    catch (error) { return { ok: false, message: errorMessage(error) } }
+  }, [mode, role])
+
   const editInbox = useCallback(async (change: SparkInboxChange): Promise<ActionResult> => {
     const saved = credentials.current
     if (mode === 'local' || role !== 'parent' || !saved) return { ok: false, message: 'The inbox needs a hosted family connection.' }
@@ -274,5 +282,5 @@ export function useSidequest(role: Role): FamilyConnection {
     }
   }, [mode, role])
 
-  return { mode, state, execute, speak, ask, inbox, editInbox, voice, join, create }
+  return { mode, state, execute, speak, ask, hear, inbox, editInbox, voice, join, create }
 }

@@ -4,8 +4,10 @@ import type { GenericActionCtx, GenericDataModel } from 'convex/server'
 import { v } from 'convex/values'
 import type { ActionResult, Family, FamilyCommand, Role } from '../shared/domain.ts'
 import { reconcileFamily } from '../shared/sidequest.ts'
-import { MAX_VOICE_CLIP_BYTES, MAX_VOICE_TEXT, parseVoiceTurns, voiceAction, voiceBriefing, voiceGuide } from '../shared/parentVoice.ts'
+import { MAX_VOICE_TEXT, parseVoiceTurns, voiceAction, voiceBriefing, voiceGuide } from '../shared/parentVoice.ts'
 import type { VoiceReply, VoiceTurn } from '../shared/parentVoice.ts'
+import { transcribe, usableClip } from './transcribe.ts'
+import type { Transcript } from './transcribe.ts'
 
 // Spoken commands need a quick answer, so this uses the fastest model at low effort.
 const MODEL = 'claude-haiku-5-5'
@@ -156,38 +158,23 @@ export const command = actionGeneric({
   },
 })
 
-const extensions: Record<string, string> = { webm: 'webm', ogg: 'ogg', mp4: 'm4a', mpeg: 'mp3', wav: 'wav', 'x-wav': 'wav' }
-
-// ElevenLabs Scribe turns the parent's recording into text; the browser's own speech recognition is too patchy across browsers.
-async function transcribe(clip: { audio: ArrayBuffer; mimeType: string; language: string }): Promise<{ text: string } | { error: string }> {
-  const key = process.env.ELEVENLABS_API_KEY
-  if (!key) return { error: 'Voice input is not set up yet: the server needs its ElevenLabs key.' }
-  const subtype = clip.mimeType.split(';')[0].split('/')[1] ?? ''
-  const form = new FormData()
-  form.append('model_id', 'scribe_v2')
-  if (/^[a-z]{2,3}$/.test(clip.language)) form.append('language_code', clip.language)
-  form.append('file', new Blob([clip.audio], { type: clip.mimeType.split(';')[0] }), `speech.${extensions[subtype] ?? 'webm'}`)
-  const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', { method: 'POST', headers: { 'xi-api-key': key }, body: form })
-  if (!response.ok) {
-    const detail = (await response.text().catch(() => '')).slice(0, 300)
-    console.error('Speech-to-text failed', response.status, detail)
-    if (detail.includes('missing_permissions')) return { error: 'Voice input needs the "Speech to Text" permission turned on for the server\'s ElevenLabs key.' }
-    return { error: response.status === 401 ? 'The server\'s ElevenLabs key is not working.' : response.status === 429 ? 'Voice input is busy right now. Try again in a minute.' : 'I couldn\'t understand the recording. Try again.' }
-  }
-  const result: { text?: unknown } = await response.json()
-  // Scribe marks sounds like "(laughs)" or "[music]"; only the words matter here.
-  return { text: typeof result.text === 'string' ? result.text.replace(/\([^)]*\)|\[[^\]]*\]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, MAX_VOICE_TEXT) : '' }
-}
+const transcriptProblems = {
+  'not-set-up': 'Voice input is not set up yet: the server needs its ElevenLabs key.',
+  'missing-permission': 'Voice input needs the "Speech to Text" permission turned on for the server\'s ElevenLabs key.',
+  'key-rejected': 'The server\'s ElevenLabs key is not working.',
+  busy: 'Voice input is busy right now. Try again in a minute.',
+  unclear: 'I couldn\'t understand the recording. Try again.',
+} satisfies Record<Extract<Transcript, { ok: false }>['reason'], string>
 
 /** A spoken command: the recording is transcribed, then answered like a typed one. */
 export const listen = actionGeneric({
   args: { token: v.string(), audio: v.bytes(), mimeType: v.string(), language: v.string(), earlier: v.array(turnValidator) },
   handler: async (ctx, args): Promise<VoiceReply> => {
-    if (!validToken(args.token) || args.audio.byteLength < 200 || args.audio.byteLength > MAX_VOICE_CLIP_BYTES || !/^audio\/[a-z0-9.+-]+(;.*)?$/i.test(args.mimeType)) return { ok: false, message: 'That recording could not be used. Try again.' }
+    if (!validToken(args.token) || !usableClip(args)) return { ok: false, message: 'That recording could not be used. Try again.' }
     const family = await readFamily(ctx, args.token)
     if (!family) return { ok: false, message: 'Voice commands need this parent dashboard to be connected.' }
-    const transcript = await transcribe(args)
-    if ('error' in transcript) return { ok: false, message: transcript.error }
+    const transcript = await transcribe(args, MAX_VOICE_TEXT)
+    if (!transcript.ok) return { ok: false, message: transcriptProblems[transcript.reason] }
     if (!transcript.text) return { ok: true, heard: '', reply: '', changes: [] }
     const turns = parseVoiceTurns([...args.earlier, { role: 'parent', text: transcript.text }])
     if (!turns) return { ok: false, message: 'Let\'s start that again. Tap the circle and say it once more.' }

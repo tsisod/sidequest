@@ -10,7 +10,7 @@ import PixelWorld from './PixelWorld'
 import WakeAlarmPanel from '../alarm/WakeAlarmPanel'
 import type { Speak } from '../../shared/speech'
 import { parseSparkSettings, sparkReminder } from '../../shared/spark'
-import type { AskSpark, SparkTurn } from '../../shared/spark'
+import type { AskSpark, HearSpark, SparkTurn } from '../../shared/spark'
 import SparkDialogue from './spark/SparkDialogue'
 import { DialogueAudio } from './dialogue/DialogueAudio'
 import { GameSounds } from '../sound/GameSounds'
@@ -50,9 +50,10 @@ type ChildGameProps = {
   onCommand: (command: FamilyCommand) => Promise<ActionResult>
   onSpeak: Speak
   onAsk: AskSpark
+  onHear: HearSpark
 }
 
-export default function ChildGame({ family, now, onCommand, onSpeak, onAsk }: ChildGameProps) {
+export default function ChildGame({ family, now, onCommand, onSpeak, onAsk, onHear }: ChildGameProps) {
   const [busy, setBusy] = useState<string | null>(null)
   const [message, setMessage] = useState('')
   const journalDialog = useRef<HTMLDialogElement>(null)
@@ -157,7 +158,7 @@ export default function ChildGame({ family, now, onCommand, onSpeak, onAsk }: Ch
 
     {message && <div className="child-message" role="alert">{message}<button type="button" className="icon-button" onClick={() => setMessage('')} aria-label="Dismiss message"><Icon name="close" size={17} /></button></div>}
 
-    {sparkOpen && <SparkDialogue spark={spark} childName={family.childName} keybinds={keybinds} turns={sparkTurns} audio={audio} speak={onSpeak} ask={onAsk} onTurns={setSparkTurns} onClose={() => { sounds.play('close'); setSparkOpen(false) }} />}
+    {sparkOpen && <SparkDialogue spark={spark} childName={family.childName} keybinds={keybinds} turns={sparkTurns} audio={audio} speak={onSpeak} ask={onAsk} hear={onHear} onTurns={setSparkTurns} onClose={() => { sounds.play('close'); setSparkOpen(false) }} />}
     {menuOpen && <GameMenu sounds={sounds} alarmStatus={family.wakeAlarm.enabled ? `${family.wakeAlarm.time} every day` : 'Off'} alarmHost={setAlarmHost} calendar={<ChildCalendar family={family} helperName={spark.name} onCommand={onCommand} />} calendarStatus={nextEventLabel(family)} audio={audio} keybinds={keybinds} onKeybinds={setKeybinds} spark={spark} onSpark={setSpark} childName={family.childName} speak={onSpeak} onClose={closeMenu} />}
 
     <dialog className="child-journal-dialog" ref={journalDialog} aria-label="Quest journal" onClose={() => sounds.play('close')} onClick={event => { if (event.target === event.currentTarget) journalDialog.current?.close() }}><div className="child-journal-dialog-top"><span><Icon name="book" size={19} />Quest journal</span><button type="button" className="icon-button" onClick={() => journalDialog.current?.close()} aria-label="Close quest journal"><Icon name="close" size={20} /></button></div>{journal}<div className="child-journal-total"><span><Icon name="star" size={16} />{xp} XP earned</span><span><Icon name="coin" size={16} />{gold} gold</span></div></dialog>

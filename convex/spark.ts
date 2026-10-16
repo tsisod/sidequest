@@ -5,8 +5,9 @@ import type { ActionResult, Family } from '../shared/domain.ts'
 import { parseKeybinds } from '../shared/keybinds.ts'
 import { applyCommand, familyWithinSizeLimit, parseFamily, projectDay, reconcileFamily } from '../shared/sidequest.ts'
 import { defaultSpark, MAX_SPARK_ALERTS, MAX_SPARK_MESSAGE, MAX_SPARK_REPLY, parseSparkName, parseSparkScreening, parseSparkTurns, sparkBriefing, sparkGuide, sparkSafeReplies, sparkSafetyGuide, sparkSafetyRequest, sparkVerdictSchema } from '../shared/spark.ts'
-import type { SparkAlert, SparkAlertKind, SparkCheck, SparkReply, SparkScreening } from '../shared/spark.ts'
+import type { SparkAlert, SparkAlertKind, SparkCheck, SparkHeard, SparkReply, SparkScreening } from '../shared/spark.ts'
 import { digest } from './family.ts'
+import { transcribe, usableClip } from './transcribe.ts'
 
 const MODEL = 'claude-opus-5-5'
 const SAFETY_MODEL = 'claude-haiku-5-5'
@@ -87,6 +88,21 @@ const contextRef = makeFunctionReference<'query', { tokenHash: string }, Family 
 const submitRef = makeFunctionReference<'mutation', { tokenHash: string; questId: string }, ActionResult>('spark:submit')
 const alertRef = makeFunctionReference<'mutation', { tokenHash: string; kind: SparkAlertKind; message: string; reply?: string }, null>('spark:alert')
 const unavailable = (message: string): SparkReply => ({ ok: false, message })
+
+/** The child's spoken message as text; it is then sent through `ask`, so the usual safety checks apply. */
+export const hear = actionGeneric({
+  args: { token: v.string(), name: v.string(), audio: v.bytes(), mimeType: v.string(), language: v.string() },
+  handler: async (ctx, args): Promise<SparkHeard> => {
+    const name = parseSparkName(args.name) ?? defaultSpark.name
+    if (!/^[a-f0-9]{64}$/.test(args.token) || !usableClip(args)) return { ok: false, message: `${name} couldn't hear that. Try again, or type it.` }
+    if (!await ctx.runQuery(contextRef, { tokenHash: await digest(args.token) })) return { ok: false, message: `${name} needs a connected child device.` }
+    const heard = await transcribe(args, MAX_SPARK_MESSAGE)
+    if (heard.ok) return heard
+    if (heard.reason === 'unclear') return { ok: false, message: `${name} couldn't hear that clearly. Try again, or type it.` }
+    if (heard.reason === 'busy') return { ok: false, message: `${name} is busy listening to lots of people. Try again in a minute, or type it.` }
+    return { ok: false, message: `Talking to ${name} out loud isn't set up yet. Ask a parent, or type instead.` }
+  },
+})
 
 const tools: Anthropic.Beta.BetaTool[] = [{
   name: 'submit_quest',

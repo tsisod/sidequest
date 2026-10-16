@@ -12,6 +12,7 @@ import type * as family from "../family.js";
 import type * as migrations from "../migrations.js";
 import type * as spark from "../spark.js";
 import type * as speech from "../speech.js";
+import type * as transcribe from "../transcribe.js";
 import type * as validators from "../validators.js";
 import type * as voice from "../voice.js";
 
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   migrations: typeof migrations;
   spark: typeof spark;
   speech: typeof speech;
+  transcribe: typeof transcribe;
   validators: typeof validators;
   voice: typeof voice;
 }>;

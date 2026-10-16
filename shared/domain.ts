@@ -1,4 +1,4 @@
-import type { AskSpark, SparkAlert, SparkInboxChange } from './spark.ts'
+import type { AskSpark, HearSpark, SparkAlert, SparkInboxChange } from './spark.ts'
 import type { Speak } from './speech.ts'
 import type { VoiceApi } from './parentVoice.ts'
 
@@ -120,6 +120,7 @@ export type FamilyConnection = {
   execute: (command: FamilyCommand) => Promise<ActionResult>
   speak: Speak
   ask: AskSpark
+  hear: HearSpark
   inbox: SparkAlert[] | null
   editInbox: (change: SparkInboxChange) => Promise<ActionResult>
   voice: VoiceApi

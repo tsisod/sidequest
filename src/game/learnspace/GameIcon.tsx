@@ -20,6 +20,7 @@ export type GameIconName =
   | 'interact'
   | 'jump'
   | 'menu'
+  | 'mic'
   | 'moon'
   | 'outfit'
   | 'primary'
@@ -47,6 +48,7 @@ const ICON_PATHS: Record<GameIconName, string> = {
   backpack: 'M5 1h6v3h2v2h1v8H2V6h1V4h2zm2 2v1h2V3zM4 6v2h8V6zm1 4v2h6v-2z',
   bow: 'M2 2h2v2h1v2h1v4H5v2H4v2H2v-2h1v-2h1V6H3V4H2zm4 5h8v2H6zm5-3h2v2h1v2h-2V6h-1z',
   calendar: 'M4 1h2v2h4V1h2v2h3v12H1V3h3zM3 7v6h10V7zm1 2h2v2H4zm3 0h2v2H7zm3 0h2v2h-2z',
+  mic: 'M7 1h2v1h1v7h-1v1H7V9H6V2h1zM3 6h2v3H3zm8 0h2v3h-2zM4 9h2v2H4zm6 0h2v2h-2zm-4 1h4v2H6zm1 2h2v2H7zm-2 2h6v1H5z',
   check: 'M2 8h3v3h2v2h2v-2h2V9h2V6h2V3h-3v3h-2v2H8v2H7V8H5V6H2z',
   close: 'M3 2h2v2h2v2h2V4h2V2h2v3h-2v2H9v2h2v2h2v3h-2v-2H9v-2H7v2H5v2H3v-3h2V9h2V7H5V5H3z',
   chevron: 'M5 2h3v2h2v2h2v4h-2v2H8v2H5v-3h2V9h2V7H7V5H5z',

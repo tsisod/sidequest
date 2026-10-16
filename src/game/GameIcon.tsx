@@ -8,7 +8,7 @@ const aliases = {
   'arrow-left': 'back', close: 'close', book: 'quest', leaf: 'leaf', house: 'account',
   star: 'skills', coin: 'wallet', link: 'interact', copy: 'save', external: 'exit',
   trash: 'trash', settings: 'settings', chevron: 'chevron', shield: 'heart', flag: 'quest',
-  spark: 'sparkle', user: 'account', volume: 'sound-on', mic: 'sound-on', moon: 'moon', help: 'controls', inbox: 'quest', menu: 'menu',
+  spark: 'sparkle', user: 'account', volume: 'sound-on', mic: 'sound-on', moon: 'moon', help: 'controls', inbox: 'quest', menu: 'menu', calendar: 'calendar',
 } satisfies Record<Exclude<IconName, 'play' | 'pause'>, GameIconName>
 
 function isAlias(name: IconName | GameIconName): name is keyof typeof aliases { return Object.hasOwn(aliases, name) }

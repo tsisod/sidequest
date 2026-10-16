@@ -4,7 +4,7 @@ import type { Place } from '../../shared/domain'
 import { cameraFor, drawFarm, loadFarmAssets, pixelScale } from './farmScene'
 import type { Camera, Direction } from './farmScene'
 import { isJumping, jumpHeight } from './jump'
-import { dust, heroPose, liveParticles, smoke, sparkDrift, twinkle } from './effects'
+import { dust, heroPose, liveParticles, smoke, sparkDrift, splash, twinkle, wake } from './effects'
 import { forgeChimneyTop } from './forge'
 import type { Particle } from './effects'
 import { actionFor, heldDirection, keyLabel } from '../../shared/keybinds'
@@ -12,8 +12,9 @@ import type { Keybinds } from '../../shared/keybinds'
 import { daylightAt, localTime, seasonFor } from './sky'
 import type { Daylight, Season } from './sky'
 import { villagers } from './villagers'
-import { heroStart, moveHero, nearestVillager, props, talkSpots } from './world'
+import { heroStart, isSwimming, moveHero, nearestVillager, props, talkSpots } from './world'
 import type { NpcKind, Point } from './world'
+import { useSound } from '../sound/SoundContext'
 import './world.css'
 
 type PixelWorldProps = { canMove: boolean; now: number; timeZone: string; openQuests: ReadonlyMap<Place, number>; keybinds: Keybinds; onTalk: (npc: NpcKind) => void }
@@ -24,6 +25,7 @@ const preview = import.meta.env.DEV ? new URLSearchParams(window.location.search
 const previewSeason = seasons.find(season => season === preview?.get('season')) ?? null
 const previewHour = preview?.has('hour') ? Number(preview.get('hour')) : null
 const SPRINT = 1.8
+const SWIM = .55
 // Shift turns number keys into symbols, so read the physical digit to keep number keybinds working while sprinting.
 const pressedKey = (event: KeyboardEvent) => event.shiftKey && /^Digit\d$/.test(event.code) ? event.code.slice(5) : event.key.toLowerCase()
 
@@ -35,12 +37,13 @@ export default function PixelWorld({ canMove, now, timeZone, openQuests, keybind
   const sprinting = useRef(false)
   const destination = useRef<Point | null>(null)
   const jumpStartedAt = useRef<number | null>(null)
+  const play = useSound()
   const onTalkRef = useRef(onTalk)
   const canMoveRef = useRef(canMove)
   const keybindsRef = useRef(keybinds)
   const player = useRef<{ point: Point; direction: Direction }>({ point: heroStart, direction: 'down' })
   const spark = useRef<Point>({ x: heroStart.x + 14, y: heroStart.y - 28 })
-  const effects = useRef({ dust: [] as Particle[], twinkles: [] as Particle[], smoke: [] as Particle[], lastDust: 0, lastTwinkle: 0, lastSmoke: 0, airborne: false, landedAt: -Infinity })
+  const effects = useRef({ dust: [] as Particle[], splashes: [] as Particle[], twinkles: [] as Particle[], smoke: [] as Particle[], lastDust: 0, lastTwinkle: 0, lastSmoke: 0, airborne: false, swimming: false, landedAt: -Infinity })
   const camera = useRef<Camera & { cssScale: number }>({ x: 0, y: 0, scale: 2, cssScale: 2 })
   const [error, setError] = useState('')
   const season = previewSeason ?? seasonFor(localTime(now, timeZone), timeZone)
@@ -61,8 +64,10 @@ export default function PixelWorld({ canMove, now, timeZone, openQuests, keybind
   const beginJump = useCallback(() => {
     if (!canMove || document.hidden || document.querySelector('dialog[open]')) return
     const now = performance.now()
-    if (!isJumping(jumpStartedAt.current, now)) jumpStartedAt.current = now
-  }, [canMove])
+    if (isJumping(jumpStartedAt.current, now) || isSwimming(player.current.point)) return
+    jumpStartedAt.current = now
+    play('jump')
+  }, [canMove, play])
 
   useEffect(() => {
     map.current?.focus({ preventScroll: true })
@@ -108,7 +113,7 @@ export default function PixelWorld({ canMove, now, timeZone, openQuests, keybind
         const sprint = sprinting.current
         if (canMoveRef.current && (dx || dy)) {
           const magnitude = Math.hypot(dx, dy)
-          const stride = step * (sprint ? SPRINT : 1)
+          const stride = step * (isSwimming(previous) ? SWIM : sprint ? SPRINT : 1)
           const next = moveHero(previous, dx / magnitude * stride, dy / magnitude * stride)
           moving = next.x !== previous.x || next.y !== previous.y
           player.current.point = next
@@ -130,12 +135,16 @@ export default function PixelWorld({ canMove, now, timeZone, openQuests, keybind
         spark.current = { x: sparkFrom.x + (perch.x - sparkFrom.x) * follow, y: sparkFrom.y + (perch.y - sparkFrom.y) * follow }
         const fx = effects.current
         const lift = canMoveRef.current ? jumpHeight(jumpStartedAt.current, time) : 0
-        if (fx.airborne && lift === 0) { fx.landedAt = time; if (motion) fx.dust.push(...dust(hero, time, 5)) }
+        const swimming = lift === 0 && isSwimming(hero)
+        if (swimming !== fx.swimming) { if (motion) fx.splashes.push(...splash(hero, time, swimming ? 14 : 8)); play('splash'); fx.swimming = swimming }
+        if (fx.airborne && lift === 0) { fx.landedAt = time; if (motion && !swimming) fx.dust.push(...dust(hero, time, 5)) }
         fx.airborne = lift > 0
-        if (motion && moving && !fx.airborne && time - fx.lastDust > (sprint ? 80 : 170)) { fx.dust.push(...dust(hero, time, sprint ? 3 : 2)); fx.lastDust = time }
+        if (motion && moving && swimming && time - fx.lastDust > 210) { fx.dust.push(...wake(hero, time)); fx.lastDust = time }
+        if (motion && moving && !swimming && !fx.airborne && time - fx.lastDust > (sprint ? 80 : 170)) { fx.dust.push(...dust(hero, time, sprint ? 3 : 2)); fx.lastDust = time }
         if (motion && time - fx.lastTwinkle > (Math.hypot(spark.current.x - sparkFrom.x, spark.current.y - sparkFrom.y) > .4 ? 70 : 380)) { fx.twinkles.push(twinkle(spark.current, time)); fx.lastTwinkle = time }
         if (motion && chimney && time - fx.lastSmoke > 280) { fx.smoke.push(smoke(chimney, time)); fx.lastSmoke = time }
         fx.dust = liveParticles(fx.dust, time)
+        fx.splashes = liveParticles(fx.splashes, time)
         fx.smoke = liveParticles(fx.smoke, time)
         fx.twinkles = liveParticles(fx.twinkles, time)
         const { scale, cssScale } = camera.current
@@ -144,7 +153,7 @@ export default function PixelWorld({ canMove, now, timeZone, openQuests, keybind
         const focus = cameraFor(hero, viewWidth, viewHeight)
         camera.current = { x: focus.x, y: focus.y, scale, cssScale }
         context.setTransform(scale, 0, 0, scale, -focus.x * scale, -focus.y * scale)
-        drawFarm(context, assets, { hero, spark: spark.current, direction: player.current.direction, moving, sprinting: sprint && moving, time: reducedMotion.matches && !moving ? 0 : time, jumpHeight: lift, pose: heroPose({ time, moving, airborne: fx.airborne, landedAt: fx.landedAt, motion }), dust: fx.dust, twinkles: fx.twinkles, smoke: fx.smoke, motion, camera: camera.current, viewWidth, viewHeight, daylight })
+        drawFarm(context, assets, { hero, spark: spark.current, direction: player.current.direction, moving, sprinting: sprint && moving, swimming, time: reducedMotion.matches && !moving ? 0 : time, jumpHeight: lift, pose: heroPose({ time, moving, airborne: fx.airborne, landedAt: fx.landedAt, motion }), dust: fx.dust, splashes: fx.splashes, twinkles: fx.twinkles, smoke: fx.smoke, motion, camera: camera.current, viewWidth, viewHeight, daylight })
         const nearby = nearestVillager(hero)
         for (const spot of talkSpots) {
           const marker = markers.current.get(spot.npc)
@@ -160,7 +169,7 @@ export default function PixelWorld({ canMove, now, timeZone, openQuests, keybind
     window.addEventListener('blur', clear)
     document.addEventListener('visibilitychange', clear)
     return () => { disposed = true; cancelAnimationFrame(frame); observer.disconnect(); clear(); window.removeEventListener('blur', clear); document.removeEventListener('visibilitychange', clear) }
-  }, [season, timeZone])
+  }, [season, timeZone, play])
 
   useEffect(() => {
     if (!canMove) return
@@ -224,7 +233,7 @@ export default function PixelWorld({ canMove, now, timeZone, openQuests, keybind
     map.current?.focus({ preventScroll: true })
   }
   return <div className="world-shell">
-    <div ref={map} className="world-map" tabIndex={0} role="group" aria-label={`Willowbrook farm. Arrow keys or ${[keybinds.up, keybinds.left, keybinds.down, keybinds.right].map(keyLabel).join(' ')} to walk, hold ${keyLabel(keybinds.sprint)} to sprint, ${keyLabel(keybinds.jump)} to jump, ${keyLabel(keybinds.interact)} to talk to someone nearby, Escape for the menu.`}>
+    <div ref={map} className="world-map" tabIndex={0} role="group" aria-label={`Willowbrook farm. Arrow keys or ${[keybinds.up, keybinds.left, keybinds.down, keybinds.right].map(keyLabel).join(' ')} to walk, hold ${keyLabel(keybinds.sprint)} to sprint, ${keyLabel(keybinds.jump)} to jump, ${keyLabel(keybinds.interact)} to talk to someone nearby, ${keyLabel(keybinds.hints)} to show or hide key hints, Escape for the menu.`}>
       <canvas ref={canvas} className="world-art" aria-hidden="true" onPointerDown={walkTo} />
       {error && <p className="world-error" role="alert">{error}</p>}
       {talkSpots.map(({ npc }) => {

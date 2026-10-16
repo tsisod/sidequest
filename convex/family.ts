@@ -86,6 +86,10 @@ export const command = mutationGeneric({
       const place = parsePlace(args.command.place)
       if (!schedule || !place) return { ok: false, message: 'Choose a valid task schedule.' }
       command = { ...args.command, place, schedule }
+    } else if (args.command.kind === 'add-event') {
+      const schedule = parseSchedule(args.command.schedule)
+      if (!schedule) return { ok: false, message: 'Choose a valid event date.' }
+      command = { ...args.command, schedule }
     } else if (args.command.kind === 'set-wake-alarm') {
       const time = parseAlarmTime(args.command.time)
       if (!time) return { ok: false, message: 'Choose a valid wake-up time.' }

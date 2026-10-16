@@ -23,7 +23,9 @@
 .game-journal > span { display: grid; gap: 3px; font-size: 12px; line-height: 1; text-align: left; }
 .game-journal strong { color: #39291f; font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1; }
 .game-menu-open { display: none; place-items: center; width: var(--hud-height); padding: 0; color: #6e5037; cursor: pointer; pointer-events: auto; }
-.game-spark { display: flex; align-items: center; gap: 6px; padding: 0 12px 0 0; color: #6e5037; font: inherit; cursor: pointer; pointer-events: auto; }
+.game-spark { position: relative; display: flex; align-items: center; gap: 6px; padding: 0 12px 0 0; color: #6e5037; font: inherit; cursor: pointer; pointer-events: auto; }
+.game-spark-alert { position: absolute; top: -14px; right: -14px; display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid #39291f; background: #c4533a; color: #fffaf0; box-shadow: inset 2px 2px #dd7a5f, inset -2px -2px #8f3527, 2px 2px 0 rgb(0 0 0 / 35%); font: 500 16px/1 'Pixelify Sans', monospace; animation: game-spark-alert 1.6s steps(2, jump-none) infinite; }
+@keyframes game-spark-alert { 50% { translate: 0 -3px; } }
 .game-spark > span:last-child { display: grid; gap: 3px; font-size: 12px; line-height: 1; text-align: left; }
 .game-spark strong { max-width: 9ch; overflow: hidden; color: #39291f; font-size: 20px; font-weight: 500; line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
 .game-spark-avatar { position: relative; flex: none; width: 48px; height: 40px; overflow: hidden; }
@@ -64,6 +66,12 @@
 .child-journal-total { display: flex; align-items: center; justify-content: space-between; padding: 0 10px 22px; color: #6e5037; font: 16px 'Pixelify Sans',monospace; }
 .child-journal-total > span { display: flex; align-items: center; gap: 6px; }
 
+.game-reward-waiting { position: absolute; left: 50%; top: 40%; display: flex; align-items: center; gap: 10px; padding: 4px 18px 4px 6px; translate: -50% -50%; font: inherit; cursor: pointer; pointer-events: auto; animation: game-reward-bob 1.2s steps(2, jump-none) infinite; }
+.game-reward-coin { width: 40px; height: 40px; filter: drop-shadow(2px 2px 0 rgb(0 0 0 / .3)); }
+.game-reward-waiting > span { display: grid; gap: 3px; color: #6e5037; font-size: 14px; line-height: 1; text-align: left; white-space: nowrap; }
+.game-reward-waiting strong { color: #39291f; font-size: 24px; font-weight: 500; }
+@keyframes game-reward-bob { 50% { translate: -50% calc(-50% - 4px); } }
+
 @media (pointer: coarse), (max-width: 700px) { .game-menu-open { display: grid; } }
 @media (max-width: 560px) {
   .child-app { --hud-height: 52px; }
@@ -79,4 +87,4 @@
   .child-journal-dialog-top > span { gap: 7px; font-size: 23px; }
   .child-journal-total { padding-inline: 4px; }
 }
-@media (prefers-reduced-motion: reduce) { .child-quest-submit { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .child-quest-submit { transition: none; } .game-spark-alert, .game-reward-waiting { animation: none; } }

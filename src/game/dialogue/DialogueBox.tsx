@@ -7,6 +7,7 @@ import type { DialogueAudio } from './DialogueAudio'
 import { dialoguePages } from './dialoguePages'
 import { VoicedText } from './VoicedText'
 import { useVoiceLines } from './voiceLines'
+import { useSound } from '../../sound/SoundContext'
 import './dialogue.css'
 
 export type Choice = { label: string; act: () => void }
@@ -30,6 +31,7 @@ export function DialogueBox({ character, audio, speak, scene, text, badge, choic
   const voices = useVoiceLines(pages, character.voice, speak)
   const shown = Math.min(paging.scene === scene ? paging.page : 0, pages.length - 1)
   const lastPage = shown === pages.length - 1
+  const play = useSound()
 
   useLayoutEffect(() => {
     if (!dialog.current?.open) dialog.current?.showModal()
@@ -56,9 +58,9 @@ export function DialogueBox({ character, audio, speak, scene, text, badge, choic
       </header>
       <VoicedText audio={audio} line={voices.get(pages[shown]) ?? 'loading'} text={pages[shown]} />
       <div className="dialogue-choices" ref={actions} onKeyDown={moveFocus}>
-        {lastPage ? choices.map(choice => <button className="dialogue-choice" disabled={busy} key={choice.label} onPointerEnter={event => { if (event.pointerType === 'mouse') event.currentTarget.focus({ preventScroll: true }) }} onClick={choice.act} type="button">
+        {lastPage ? choices.map(choice => <button className="dialogue-choice" disabled={busy} key={choice.label} onPointerEnter={event => { if (event.pointerType === 'mouse') event.currentTarget.focus({ preventScroll: true }) }} onClick={() => { play('tap'); choice.act() }} type="button">
           <Icon className="menu-cursor" name="cursor" size={16} /><span>{choice.label}</span>
-        </button>) : <button aria-label="Continue" className="dialogue-advance" disabled={busy} onClick={() => setPaging({ scene, page: shown + 1 })} type="button">
+        </button>) : <button aria-label="Continue" className="dialogue-advance" disabled={busy} onClick={() => { play('advance'); setPaging({ scene, page: shown + 1 }) }} type="button">
           <span>Continue</span><Icon name="cursor" size={16} />
         </button>}
       </div>

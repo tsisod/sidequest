@@ -78,6 +78,7 @@
 .p-notice, .p-error { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding: 6px 6px 6px 16px; border-radius: 12px; background: var(--p-accent-soft); color: var(--p-accent-ink); font-size: 14px; animation: p-pop 150ms var(--ease-out); }
 .p-notice > .icon-button, .p-error > .icon-button { margin-left: auto; width: 36px; height: 36px; color: inherit; }
 .p-error { background: var(--p-danger-bg); color: var(--p-danger-ink); }
+.p-app .p-message { animation: p-pop 150ms var(--ease-out), p-message-out 250ms var(--ease-out) 4750ms forwards; }
 
 .p-summary-grid { display: grid; grid-template-columns: minmax(340px, .95fr) minmax(0, 1.55fr); gap: 24px; margin-bottom: 24px; }
 .p-card { min-width: 0; background: var(--p-surface); border: 1px solid var(--p-line); border-radius: 16px; }
@@ -216,6 +217,7 @@
 
 @keyframes p-pop { from { opacity: 0; transform: translateY(-4px) scale(.98); } }
 @keyframes p-fade-in { from { opacity: 0; } }
+@keyframes p-message-out { to { opacity: 0; transform: translateY(-4px); } }
 @keyframes p-dialog-in { from { opacity: 0; transform: translateY(12px) scale(.98); } }
 @keyframes p-sheet-in { from { transform: translateY(100%); } }
 
@@ -245,7 +247,7 @@
   .p-brand { font-size: 25px; gap: 7px; }
   .p-brand-mark { font-size: 28px; }
   .p-route-nav { grid-column: 1 / -1; grid-row: 2; justify-content: center; }
-  .p-route-nav a { flex: 1; justify-content: center; min-height: 44px; font-size: 14px; }
+  .p-route-nav a { flex: 1; justify-content: center; gap: 6px; min-height: 44px; padding-inline: 8px; font-size: 14px; }
   .p-header-actions { gap: 4px; }
   .p-menu-panel { width: min(280px, calc(100vw - 32px)); }
   .p-page-heading { align-items: flex-start; gap: 12px; margin: 24px 0 20px; }

@@ -9,6 +9,9 @@ import type { SparkAlert, SparkInboxChange } from '../../shared/spark'
 import type { VoiceApi } from '../../shared/parentVoice'
 import VoiceAssistant from './VoiceAssistant'
 import ParentInbox from './ParentInbox'
+import ParentCalendar from './ParentCalendar'
+import ParentMessage from './ParentMessage'
+import { formatDate } from '../calendar/format'
 import Icon from '../components/Icon'
 import ParentWakeAlarm from './ParentWakeAlarm'
 import type { IconName } from '../components/Icon'
@@ -45,9 +48,6 @@ const weekdays: { value: Weekday; short: string; label: string }[] = [
 ]
 function isPlace(value: string): value is Place { return places.some(item => item.value === value) }
 function isRepeat(value: string): value is Repeat { return value === 'once' || value === 'daily' || value === 'weekly' }
-function formatDate(date: DateKey, options: Intl.DateTimeFormatOptions): string {
-  return new Intl.DateTimeFormat(undefined, { ...options, timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`))
-}
 function scheduleLabel(template: TaskTemplate | undefined): string {
   if (!template || template.schedule.kind === 'once') return 'Once'
   if (template.schedule.kind === 'daily') return 'Daily'
@@ -243,7 +243,7 @@ export default function ParentDashboard({ family, now, mode, onCommand, onOpenGa
     <a className="p-skip" href="#parent-main">Skip to dashboard</a>
     <header className="p-topbar"><div className="p-topbar-inner">
         <a className="p-brand" href={routes.parents} aria-label="Sidequest parent dashboard"><span className="p-brand-mark" aria-hidden="true">✦</span><span className="pixel-font">sidequest</span></a>
-        <nav className="p-route-nav" aria-label="Views"><a href={joinUrl.toString()} onClick={openGame}><Icon name="play" size={14} />Game</a><a href={routes.parents} aria-current={view === 'dashboard' ? 'page' : undefined}><Icon name="home" size={16} />Parents</a></nav>
+        <nav className="p-route-nav" aria-label="Views"><a href={joinUrl.toString()} onClick={openGame}><Icon name="play" size={14} />Game</a><a href={routes.parents} aria-current={view === 'dashboard' ? 'page' : undefined}><Icon name="home" size={16} />Parents</a><a href={routes.calendar} aria-current={view === 'calendar' ? 'page' : undefined}><Icon name="calendar" size={16} />Calendar</a></nav>
         <div className="p-header-actions">
           <a className="p-inbox-button" href={routes.inbox} aria-current={view === 'inbox' ? 'page' : undefined} aria-label={unreadAlerts ? `Inbox, ${unreadAlerts} new` : 'Inbox'} title="Inbox"><Icon name="inbox" size={20} />{unreadAlerts > 0 && <span className="p-nav-count" aria-hidden="true">{unreadAlerts > 9 ? '9+' : unreadAlerts}</span>}</a>
           <details className="p-menu p-profile-menu" ref={profileRef} onKeyDown={event => { if (event.key === 'Escape') event.currentTarget.open = false }}>
@@ -258,11 +258,11 @@ export default function ParentDashboard({ family, now, mode, onCommand, onOpenGa
         </div>
     </div></header>
     <div className="p-shell">
-      <main id="parent-main">{view === 'inbox' ? <ParentInbox family={family} now={now} mode={mode} inbox={inbox} onEdit={onEditInbox} /> : <>
+      <main id="parent-main">{view === 'inbox' ? <ParentInbox family={family} now={now} mode={mode} inbox={inbox} onEdit={onEditInbox} /> : view === 'calendar' ? <ParentCalendar family={family} onCommand={onCommand} /> : <>
         <div className="p-page-heading"><div><h1>{family.childName}'s day</h1><p>{formatDate(today, { weekday: 'long', month: 'long', day: 'numeric' })}</p></div><div className="p-heading-actions"><button className="button button-secondary p-voice-button" type="button" onClick={() => setVoiceOpen(true)} aria-label="Talk to Sidequest" title="Talk to Sidequest"><Icon name="mic" size={20} /></button><button className="button button-primary" type="button" disabled={busy} onClick={() => openDialog('add')}><Icon name="plus" size={18} />Add quest</button></div></div>
         <div className="p-feedback" aria-live="polite" aria-atomic="true">
-          {notice && <div className="p-notice"><Icon name="check" size={18} /><span>{notice}</span><button className="icon-button" type="button" aria-label="Dismiss message" onClick={() => setNotice(null)}><Icon name="close" size={16} /></button></div>}
-          {error && !dialog && <div className="p-error" role="alert"><span>{error}</span><button className="icon-button" type="button" aria-label="Dismiss error" onClick={() => setError(null)}><Icon name="close" size={16} /></button></div>}
+          {notice && <ParentMessage kind="notice" message={notice} onDismiss={() => setNotice(null)} />}
+          {error && !dialog && <ParentMessage kind="error" message={error} onDismiss={() => setError(null)} />}
         </div>
         <div className="p-summary-grid">
           <section className="p-card p-today-card" aria-labelledby="today-heading"><div className="p-card-title"><h2 id="today-heading">Today</h2><span className="p-today-date">{formatDate(today, { month: 'short', day: 'numeric' })}</span></div>

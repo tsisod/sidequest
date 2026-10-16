@@ -13,12 +13,16 @@ function readSeen(key: string): Reward | null {
   } catch { return null }
 }
 
+const add = (left: Reward, right: Reward): Reward => ({ xp: left.xp + right.xp, gold: left.gold + right.gold })
+
 /**
  * Celebrates quest XP and gold this device has not shown yet, whether the parent approved
  * while the game was open or while it was closed. Wake-up rewards celebrate inside the alarm.
+ * New rewards wait in `waiting` until `ready`, so the celebration is seen and heard.
  * `onReward` runs as each celebration starts.
  */
-export function useQuestRewards(familyId: string, xp: number, gold: number, onReward: () => void): { reward: Reward; id: number } | null {
+export function useQuestRewards(familyId: string, xp: number, gold: number, ready: boolean, onReward: () => void): { shown: { reward: Reward; id: number } | null; waiting: Reward | null } {
+  const [waiting, setWaiting] = useState<Reward | null>(null)
   const [shown, setShown] = useState<{ reward: Reward; id: number } | null>(null)
   const lastSeen = useRef<Reward | null>(null)
   const rewarded = useRef(onReward)
@@ -31,13 +35,18 @@ export function useQuestRewards(familyId: string, xp: number, gold: number, onRe
     if (!seen) return
     const gained = { xp: Math.max(0, xp - seen.xp), gold: Math.max(0, gold - seen.gold) }
     if (!gained.xp && !gained.gold) return
-    rewarded.current()
-    setShown(current => ({ reward: current ? { xp: current.reward.xp + gained.xp, gold: current.reward.gold + gained.gold } : gained, id: (current?.id ?? 0) + 1 }))
+    setWaiting(current => current ? add(current, gained) : gained)
   }, [familyId, xp, gold])
+  if (ready && waiting) {
+    setWaiting(null)
+    setShown({ reward: shown ? add(shown.reward, waiting) : waiting, id: (shown?.id ?? 0) + 1 })
+  }
+  const shownId = shown?.id
+  useEffect(() => { if (shownId !== undefined) rewarded.current() }, [shownId])
   useEffect(() => {
     if (!shown) return
     const timer = setTimeout(() => setShown(null), CELEBRATION_MS)
     return () => clearTimeout(timer)
   }, [shown])
-  return shown
+  return { shown, waiting }
 }

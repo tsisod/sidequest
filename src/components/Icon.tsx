@@ -31,6 +31,7 @@ const paths = {
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   inbox: <><path d="M3 13h5l2 3h4l2-3h5" /><path d="M5.5 5h13L21 13v6H3v-6l2.5-8Z" /></>,
   help: <><circle cx="12" cy="12" r="9" /><path d="M9 8a3 3 0 0 1 6 0c0 2-3 2-3 5m0 4v.1" /></>,
+  calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></>,
 } satisfies Record<string, ReactNode>
 
 export type IconName = keyof typeof paths

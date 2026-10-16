@@ -3,6 +3,7 @@ import type { ActionResult, Family } from '../../shared/domain'
 import type { SparkAlert, SparkAlertKind, SparkInboxChange } from '../../shared/spark'
 import Icon from '../components/Icon'
 import type { IconName } from '../components/Icon'
+import ParentMessage from './ParentMessage'
 import './parentInbox.css'
 
 type ParentInboxProps = { family: Family; now: number; mode: 'local' | 'hosted'; inbox: SparkAlert[] | null; onEdit: (change: SparkInboxChange) => Promise<ActionResult> }
@@ -34,7 +35,7 @@ export default function ParentInbox({ family, now, mode, inbox, onEdit }: Parent
 
   return <section className="p-inbox" aria-labelledby="inbox-heading">
     <div className="p-page-heading"><div><h1 id="inbox-heading">Inbox</h1><p>Messages that Spark's safety checks flagged in {family.childName}'s chats.</p></div></div>
-    {error && <div className="p-error" role="alert"><span>{error}</span><button className="icon-button" type="button" aria-label="Dismiss error" onClick={() => setError(null)}><Icon name="close" size={16} /></button></div>}
+    {error && <ParentMessage kind="error" message={error} onDismiss={() => setError(null)} />}
     {mode === 'local' || inbox === null
       ? <div className="p-card p-empty"><Icon name="inbox" size={28} /><h3>{mode === 'local' ? 'The inbox needs a hosted connection' : 'Opening the inbox…'}</h3>{mode === 'local' && <p>Spark and its safety alerts work when the family is connected across devices.</p>}</div>
       : inbox.length === 0

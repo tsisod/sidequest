@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import type { ActionResult, Family, FamilyCommand } from '../../shared/domain'
 import { parseAlarmTime, wakePhase } from '../../shared/wakeAlarm'
 import Icon from '../components/Icon'
+import { useAutoDismiss } from './useAutoDismiss'
 import './parentAlarm.css'
 
 type Props = {
@@ -25,6 +26,7 @@ export default function ParentWakeAlarm({ family, now, disabled, onCommand }: Pr
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  useAutoDismiss(notice, () => setNotice(''))
   const dialog = useRef<HTMLDialogElement>(null)
   const saving = useRef(false)
   const status = phase.kind === 'off' ? 'Off'

@@ -1,9 +1,10 @@
-import type { ActionResult, DateKey, Family, FamilyCommand, Place, PlayClock, ProjectDay, Quest, Role, Schedule, TaskTemplate, TimeZone, Weekday } from './domain.ts'
+import type { ActionResult, CalendarEvent, DateKey, EventReminder, Family, FamilyCommand, Place, PlayClock, ProjectDay, Quest, Role, Schedule, TaskTemplate, TimeZone, Weekday } from './domain.ts'
 import { alarmInstant, defaultWakeAlarm, parseAlarmTime, parseWakeAlarm, parseWakeGame, parseWakeSound, wakePhase, wakeReward } from './wakeAlarm.ts'
 import { addDays, dateAt, nextDayBoundary, parseDateKey, parseTimeZone, weekdayOf } from './calendar.ts'
 
 const MINUTE = 60_000
 const MAX_TIME = 24 * 60 * MINUTE
+export const MAX_EVENTS = 300
 const success: ActionResult = { ok: true }
 const failure = (message: string): ActionResult => ({ ok: false, message })
 export const finiteTime = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0
@@ -33,11 +34,23 @@ function parseTemplate(value: unknown): TaskTemplate | null {
   if (!schedule || (value.endsBefore !== null && !endsBefore)) return null
   return { id: value.id, title: value.title.trim(), xp: value.xp, gold: value.gold, place, schedule, endsBefore }
 }
-export function scheduledOn(template: TaskTemplate, date: DateKey): boolean {
-  if (template.endsBefore !== null && date >= template.endsBefore) return false
-  const schedule = template.schedule
+function parseCalendarEvent(value: unknown): CalendarEvent | null {
+  if (!isRecord(value) || !validText(value.id, 100) || !validText(value.title, 80) || (value.createdBy !== 'parent' && value.createdBy !== 'child')) return null
+  const schedule = parseSchedule(value.schedule)
+  return schedule ? { id: value.id, title: value.title.trim(), schedule, createdBy: value.createdBy } : null
+}
+const scheduleStart = (schedule: Schedule): DateKey => schedule.kind === 'once' ? schedule.date : schedule.from
+export function scheduleIncludes(schedule: Schedule, date: DateKey): boolean {
   if (schedule.kind === 'once') return schedule.date === date
   return date >= schedule.from && (schedule.kind === 'daily' || schedule.weekdays.includes(weekdayOf(date)))
+}
+export function scheduledOn(template: TaskTemplate, date: DateKey): boolean {
+  return (template.endsBefore === null || date < template.endsBefore) && scheduleIncludes(template.schedule, date)
+}
+export function eventsOn(family: Family, date: DateKey): CalendarEvent[] { return family.events.filter(event => scheduleIncludes(event.schedule, date)) }
+export function eventReminders(family: Family): EventReminder[] {
+  const tomorrow = addDays(family.sessionDay, 1)
+  return eventsOn(family, tomorrow).map(event => ({ key: `${event.id}@${tomorrow}`, title: event.title }))
 }
 function occurrence(template: TaskTemplate, date: DateKey): Quest {
   return { id: `${template.id}@${date}`, templateId: template.id, date, title: template.title, xp: template.xp, gold: template.gold, place: template.place, status: 'todo' }
@@ -93,11 +106,17 @@ export function createFamily({ id, code, now, timeZone }: { id: string; code: st
     { id: 'move-body', title: 'Move your body', xp: 25, gold: 2, place: 'chores' },
   ] satisfies Omit<TaskTemplate, 'schedule' | 'endsBefore'>[]
   const templates: TaskTemplate[] = defaults.map(template => ({ ...template, endsBefore: null, schedule: { kind: 'daily', from: sessionDay } }))
-  return reconcileFamily({ version: 3, id, code, childName: 'Alex', createdAt: now, screenMinutes: 20, wakeAlarm: defaultWakeAlarm({ date: sessionDay }), timeZone, sessionDay, templates, quests: [], allowanceGranted: false, allowanceUsedMs: 0, clock: { kind: 'paused', remainingMs: 0 } }, now)
+  return reconcileFamily({ version: 3, id, code, childName: 'Alex', createdAt: now, screenMinutes: 20, wakeAlarm: defaultWakeAlarm({ date: sessionDay }), timeZone, sessionDay, templates, events: [], quests: [], allowanceGranted: false, allowanceUsedMs: 0, clock: { kind: 'paused', remainingMs: 0 } }, now)
+}
+const commandRoles: Record<FamilyCommand['kind'], readonly Role[]> = {
+  'set-wake-alarm': ['parent'], 'set-wake-sound': ['child'], 'complete-wake-game': ['child'],
+  'add-template': ['parent'], 'remove-template': ['parent'], approve: ['parent'], return: ['parent'],
+  'set-screen-time': ['parent'], 'set-blocked': ['parent'], 'rename-child': ['parent'],
+  submit: ['child'], 'start-play': ['child'], 'pause-play': ['child'],
+  'add-event': ['parent', 'child'], 'remove-event': ['parent', 'child'],
 }
 export function applyCommand(family: Family, command: FamilyCommand, { role, now }: { role: Role; now: number }): { family: Family; result: ActionResult } {
-  const childCommand = command.kind === 'submit' || command.kind === 'start-play' || command.kind === 'pause-play' || command.kind === 'set-wake-sound' || command.kind === 'complete-wake-game'
-  if ((role === 'child') !== childCommand) return { family, result: failure('This action needs the other family role.') }
+  if (!commandRoles[command.kind].includes(role)) return { family, result: failure('This action needs the other family role.') }
   if (!finiteTime(now)) return { family, result: failure('The clock is unavailable. Try again.') }
   const wakeCommand = command.kind === 'set-wake-alarm' || command.kind === 'set-wake-sound' || command.kind === 'complete-wake-game'
   let next = wakeCommand ? family : reconcileFamily(family, now)
@@ -147,8 +166,7 @@ export function applyCommand(family: Family, command: FamilyCommand, { role, now
       if (!template) return done(failure('Use a title of 1–80 characters, 1–500 XP, 1–100 gold, and a valid schedule.'))
       const existing = next.templates.find(item => item.id === template.id)
       if (existing) return done(existing.title === template.title && existing.xp === template.xp && existing.gold === template.gold && existing.place === template.place && JSON.stringify(existing.schedule) === JSON.stringify(template.schedule) ? success : failure('That task ID is already in use.'))
-      const start = template.schedule.kind === 'once' ? template.schedule.date : template.schedule.from
-      if (start < next.sessionDay) return done(failure('Schedule new tasks for today or a future date.'))
+      if (scheduleStart(template.schedule) < next.sessionDay) return done(failure('Schedule new tasks for today or a future date.'))
       next = { ...next, templates: [...next.templates, template] }
       if (scheduledOn(template, next.sessionDay)) next = { ...next, quests: [...next.quests, occurrence(template, next.sessionDay)], clock: stopped(next.clock, remainingMs(next.clock, now)) }
       return done()
@@ -159,6 +177,23 @@ export function applyCommand(family: Family, command: FamilyCommand, { role, now
       const endsBefore = existing.endsBefore !== null && existing.endsBefore < next.sessionDay ? existing.endsBefore : next.sessionDay
       next = { ...next, templates: next.templates.map(template => template.id === existing.id ? { ...template, endsBefore } : template), quests: next.quests.filter(quest => !(quest.templateId === existing.id && quest.date === next.sessionDay && quest.status !== 'approved')) }
       next = grantIfComplete(next)
+      return done()
+    }
+    case 'add-event': {
+      const event = parseCalendarEvent({ ...command, createdBy: role })
+      if (!event) return done(failure('Use an event name of 1–80 characters and a valid date.'))
+      const existing = next.events.find(item => item.id === event.id)
+      if (existing) return done(JSON.stringify(existing) === JSON.stringify(event) ? success : failure('That event ID is already in use.'))
+      if (scheduleStart(event.schedule) < next.sessionDay) return done(failure('Plan events for today or a later day.'))
+      if (next.events.length >= MAX_EVENTS) return done(failure('The calendar is full. Delete an old event first.'))
+      next = { ...next, events: [...next.events, event] }
+      return done()
+    }
+    case 'remove-event': {
+      const existing = next.events.find(event => event.id === command.eventId)
+      if (!existing) return done()
+      if (role === 'child' && existing.createdBy !== 'child') return done(failure('Only your parent can delete this event.'))
+      next = { ...next, events: next.events.filter(event => event.id !== existing.id) }
       return done()
     }
     case 'approve':
@@ -227,7 +262,7 @@ function parseQuest(value: unknown): Quest | null {
   return null
 }
 export function parseFamily(value: unknown): Family | null {
-  if (!isRecord(value) || value.version !== 3 || !validText(value.id, 100) || typeof value.code !== 'string' || !/^[A-Z2-9]{8,12}$/.test(value.code) || !validText(value.childName, 24) || !finiteTime(value.createdAt) || !whole(value.screenMinutes, 120) || typeof value.allowanceGranted !== 'boolean' || !finiteTime(value.allowanceUsedMs) || !Array.isArray(value.quests) || !Array.isArray(value.templates) || !isRecord(value.clock)) return null
+  if (!isRecord(value) || value.version !== 3 || !validText(value.id, 100) || typeof value.code !== 'string' || !/^[A-Z2-9]{8,12}$/.test(value.code) || !validText(value.childName, 24) || !finiteTime(value.createdAt) || !whole(value.screenMinutes, 120) || typeof value.allowanceGranted !== 'boolean' || !finiteTime(value.allowanceUsedMs) || !Array.isArray(value.quests) || !Array.isArray(value.templates) || !(value.events === undefined || Array.isArray(value.events)) || !isRecord(value.clock)) return null
   const timeZone = parseTimeZone(value.timeZone)
   const sessionDay = parseDateKey(value.sessionDay)
   if (!timeZone || !sessionDay) return null
@@ -244,10 +279,13 @@ export function parseFamily(value: unknown): Family | null {
   const quests: Quest[] = []
   const questIds = new Set<string>()
   for (const raw of value.quests) { const quest = parseQuest(raw); if (!quest || questIds.has(quest.id) || !templateIds.has(quest.templateId)) return null; questIds.add(quest.id); quests.push(quest) }
+  const events: CalendarEvent[] = []
+  const eventIds = new Set<string>()
+  for (const raw of value.events ?? []) { const event = parseCalendarEvent(raw); if (!event || eventIds.has(event.id)) return null; eventIds.add(event.id); events.push(event) }
   let clock: PlayClock
   if (value.clock.kind === 'running' && finiteTime(value.clock.endsAt) && finiteTime(value.clock.startedAt) && value.clock.startedAt <= value.clock.endsAt) clock = { kind: 'running', endsAt: value.clock.endsAt, startedAt: value.clock.startedAt }
   else if ((value.clock.kind === 'paused' || value.clock.kind === 'blocked') && finiteTime(value.clock.remainingMs) && value.clock.remainingMs <= MAX_TIME) clock = { kind: value.clock.kind, remainingMs: value.clock.remainingMs }
   else return null
-  return { version: 3, id: value.id, code: value.code, childName: value.childName.trim(), createdAt: value.createdAt, screenMinutes: value.screenMinutes, wakeAlarm, timeZone, sessionDay, allowanceGranted: value.allowanceGranted, allowanceUsedMs: value.allowanceUsedMs, clock, templates, quests }
+  return { version: 3, id: value.id, code: value.code, childName: value.childName.trim(), createdAt: value.createdAt, screenMinutes: value.screenMinutes, wakeAlarm, timeZone, sessionDay, allowanceGranted: value.allowanceGranted, allowanceUsedMs: value.allowanceUsedMs, clock, templates, events, quests }
 }
 export function familyWithinSizeLimit(family: Family): boolean { return new TextEncoder().encode(JSON.stringify(family)).byteLength <= 750_000 }

@@ -19,3 +19,11 @@ test('the inbox is a parent page inside the dashboard', () => {
   assert.equal(parentViewForPathname('/parents/inbox'), 'inbox')
   assert.equal(parentViewForPathname('/parents'), 'dashboard')
 })
+
+test('the calendar is a parent page beside the dashboard', () => {
+  assert.equal(routes.calendar, '/parents/calendar')
+  assert.equal(roleForPathname('/parents/calendar'), 'parent')
+  assert.equal(roleForPathname('/parents/calendar/'), 'parent')
+  assert.equal(roleForPathname('/parents/calendar-other'), 'child')
+  assert.equal(parentViewForPathname('/parents/calendar'), 'calendar')
+})

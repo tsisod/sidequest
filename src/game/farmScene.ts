@@ -9,8 +9,9 @@ import type { Particle, Pose } from './effects.ts'
 
 export type Direction = 'down' | 'up' | 'left' | 'right'
 export type Camera = { x: number; y: number; scale: number }
-type Actor = { image: CanvasImageSource; crop: Crop; x: number; y: number; depth: number; size?: readonly [number, number]; shadow?: { x: number; radius: number } }
-export type FarmAssets = { art: SeasonArt; images: Map<string, HTMLImageElement>; terrain: HTMLCanvasElement[]; scenery: Actor[]; forgeFire: HTMLCanvasElement }
+type SpriteActor = { image: CanvasImageSource; crop: Crop; x: number; y: number; depth: number; size?: readonly [number, number]; shadow?: { x: number; radius: number } }
+type Actor = SpriteActor | { depth: number; paint: (context: CanvasRenderingContext2D) => void }
+export type FarmAssets = { art: SeasonArt; images: Map<string, HTMLImageElement>; terrain: HTMLCanvasElement[]; scenery: SpriteActor[]; forgeFire: HTMLCanvasElement }
 
 const npcArt: Record<NpcKind, { image: string; frames: number; width: number; anchorX: number; frameMs: number }> = {
   angler: { image: 'angler-fishing-left', frames: 5, width: 64, anchorX: 48, frameMs: 320 },
@@ -48,8 +49,8 @@ export async function loadFarmAssets(season: Season): Promise<FarmAssets> {
   return { art, images, terrain: [0, 1, 2, 3].map(frame => drawTerrain(art, atlas, frame)), scenery: arrangeScenery(art, atlas, plants, drawForge(season)), forgeFire: drawForgeFire() }
 }
 
-function arrangeScenery(art: SeasonArt, atlas: HTMLImageElement, plants: HTMLImageElement, forge: HTMLCanvasElement): Actor[] {
-  const scenery: Actor[] = []
+function arrangeScenery(art: SeasonArt, atlas: HTMLImageElement, plants: HTMLImageElement, forge: HTMLCanvasElement): SpriteActor[] {
+  const scenery: SpriteActor[] = []
   for (const prop of props) {
     if (prop.kind === 'windmill') continue
     if (prop.kind === 'forge') { scenery.push({ image: forge, crop: [0, 0, forgeArt.width, forgeArt.height], x: prop.x - forgeArt.anchor.x, y: prop.y - forgeArt.anchor.y, depth: prop.y }); continue }
@@ -68,11 +69,12 @@ function arrangeScenery(art: SeasonArt, atlas: HTMLImageElement, plants: HTMLIma
     fenceTile(column, fence.bottom, dx, 32)
   }
   for (let row = fence.top + 1; row < fence.bottom; row++) { fenceTile(fence.left, row, 0, 16); fenceTile(fence.right, row, 32, 16) }
-  const occupied = new Set(props.filter(prop => terrainAt(Math.floor(prop.x / TILE), Math.floor(prop.y / TILE)) === 'soil').map(prop => Math.floor(prop.x / TILE)))
+  const fieldProps = props.filter(prop => terrainAt(Math.floor(prop.x / TILE), Math.floor(prop.y / TILE)) === 'soil')
+  const clearing = (column: number, row: number) => fieldProps.some(prop => Math.abs(column - Math.floor(prop.x / TILE)) <= 1 && row * TILE < prop.y && row * TILE > prop.y - 4 * TILE)
   if (art.crops.length) for (let row = fence.top + 2, line = 0; row < fence.bottom; row += 2, line++) {
     const crop = art.crops[line % art.crops.length]
     for (let column = fence.left + 2; column <= fence.right - 2; column++) {
-      if (!occupied.has(column)) scenery.push({ image: plants, crop, x: column * TILE, y: row * TILE + 14 - crop[3], depth: row * TILE + 13 })
+      if (!clearing(column, row)) scenery.push({ image: plants, crop, x: column * TILE, y: row * TILE + 14 - crop[3], depth: row * TILE + 13 })
     }
   }
   return scenery
@@ -89,21 +91,37 @@ export function cameraFor(hero: Point, viewWidth: number, viewHeight: number): P
 }
 
 
-type Scene = { hero: Point; spark: Point; direction: Direction; moving: boolean; sprinting: boolean; time: number; jumpHeight: number; pose: Pose; dust: readonly Particle[]; twinkles: readonly Particle[]; smoke: readonly Particle[]; motion: boolean; camera: Camera; viewWidth: number; viewHeight: number; daylight: Daylight }
+type Scene = { hero: Point; spark: Point; direction: Direction; moving: boolean; sprinting: boolean; swimming: boolean; time: number; jumpHeight: number; pose: Pose; dust: readonly Particle[]; splashes: readonly Particle[]; twinkles: readonly Particle[]; smoke: readonly Particle[]; motion: boolean; camera: Camera; viewWidth: number; viewHeight: number; daylight: Daylight }
+
+const SWIM_SHOWN = 24
+const RIPPLE_MS = 1200
+
+function paintRipples(context: CanvasRenderingContext2D, x: number, waterline: number, time: number, motion: boolean) {
+  context.lineWidth = 1
+  const ring = (radius: number, y: number, alpha: number) => {
+    context.strokeStyle = `rgb(236 249 255 / ${alpha})`
+    context.beginPath(); context.ellipse(x, y, radius, radius * .32, 0, 0, Math.PI * 2); context.stroke()
+  }
+  if (motion) for (const offset of [0, RIPPLE_MS / 2]) {
+    const age = (time + offset) % RIPPLE_MS / RIPPLE_MS
+    ring(9 + age * 10, waterline + age, .55 * (1 - age))
+  }
+  ring(8.5, waterline, .9)
+}
 
 export function gateFrame(hero: Point): number {
   const distance = Math.hypot(hero.x - gatePoint.x, hero.y - gatePoint.y)
   return distance < 22 ? 3 : distance < 30 ? 2 : distance < 38 ? 1 : 0
 }
 
-export function drawFarm(context: CanvasRenderingContext2D, assets: FarmAssets, { hero, spark, direction, moving, sprinting, time, jumpHeight, pose, dust, twinkles, smoke, motion, camera, viewWidth, viewHeight, daylight }: Scene) {
+export function drawFarm(context: CanvasRenderingContext2D, assets: FarmAssets, { hero, spark, direction, moving, sprinting, swimming, time, jumpHeight, pose, dust, splashes, twinkles, smoke, motion, camera, viewWidth, viewHeight, daylight }: Scene) {
   const { art, images } = assets
   context.imageSmoothingEnabled = false
   context.fillStyle = '#29412e'
   context.fillRect(camera.x, camera.y, viewWidth, viewHeight)
   context.drawImage(assets.terrain[Math.floor(time / 260) % 4], 0, 0)
 
-  const actors = [...assets.scenery]
+  const actors: Actor[] = [...assets.scenery]
   const windmill = images.get(art.windmill)
   if (windmill) for (const prop of props) if (prop.kind === 'windmill') actors.push({ image: windmill, crop: [Math.floor(time / 180) % 4 * 96, 0, 96, 128], x: prop.x - 48, y: prop.y - 128, depth: prop.y })
   for (const prop of props) if (prop.kind === 'forge') actors.push({ image: assets.forgeFire, crop: [Math.floor(time / 110) % forgeArt.fire.frames * forgeArt.fire.width, 0, forgeArt.fire.width, forgeArt.fire.height], x: prop.x + forgeMouth.x, y: prop.y + forgeMouth.y, depth: prop.y + .5 })
@@ -114,13 +132,21 @@ export function drawFarm(context: CanvasRenderingContext2D, assets: FarmAssets, 
     const sheet = images.get(look.image)
     if (sheet) actors.push({ image: sheet, crop: [Math.floor(time / look.frameMs) % look.frames * look.width, 0, look.width, 32], x: npc.x - look.anchorX, y: npc.y - 31, depth: npc.y, shadow: { x: npc.x, radius: 7 } })
   }
-  const player = images.get(`farmer-${moving ? 'walk' : 'idle'}-${direction}`)
-  const heroSize = [Math.round(32 * pose.scaleX), Math.round(32 * pose.scaleY)] as const
-  if (player) actors.push({ image: player, crop: [moving ? Math.floor(time / (sprinting ? 85 : 140)) % 4 * 32 : 0, 0, 32, 32], x: hero.x - heroSize[0] / 2, y: hero.y - jumpHeight + 2 - heroSize[1], depth: hero.y, size: heroSize, shadow: { x: hero.x, radius: 8 - jumpHeight / 5 } })
+  if (swimming) {
+    const swimmer = images.get(`farmer-walk-${direction}`)
+    const waterline = hero.y - 2 + (motion ? Math.round(Math.sin(time / 260)) : 0)
+    if (swimmer) actors.push({ image: swimmer, crop: [Math.floor(time / (moving ? 190 : 380)) % 4 * 32, 0, 32, SWIM_SHOWN], x: hero.x - 16, y: waterline - SWIM_SHOWN, depth: hero.y })
+    actors.push({ depth: hero.y + .1, paint: painter => paintRipples(painter, hero.x, waterline, time, motion) })
+  } else {
+    const player = images.get(`farmer-${moving ? 'walk' : 'idle'}-${direction}`)
+    const heroSize = [Math.round(32 * pose.scaleX), Math.round(32 * pose.scaleY)] as const
+    if (player) actors.push({ image: player, crop: [moving ? Math.floor(time / (sprinting ? 85 : 140)) % 4 * 32 : 0, 0, 32, 32], x: hero.x - heroSize[0] / 2, y: hero.y - jumpHeight + 2 - heroSize[1], depth: hero.y, size: heroSize, shadow: { x: hero.x, radius: 8 - jumpHeight / 5 } })
+  }
 
   drawParticles(context, dust, time)
   actors.sort((a, b) => a.depth - b.depth)
   for (const actor of actors) {
+    if ('paint' in actor) { actor.paint(context); continue }
     if (actor.shadow) {
       context.fillStyle = '#1d382e40'
       context.beginPath(); context.ellipse(actor.shadow.x, actor.depth - 2, actor.shadow.radius, actor.shadow.radius * .45, 0, 0, Math.PI * 2); context.fill()
@@ -128,6 +154,7 @@ export function drawFarm(context: CanvasRenderingContext2D, assets: FarmAssets, 
     context.drawImage(actor.image, ...actor.crop, Math.round(actor.x), Math.round(actor.y), actor.size?.[0] ?? actor.crop[2], actor.size?.[1] ?? actor.crop[3])
   }
 
+  drawParticles(context, splashes, time)
   drawParticles(context, smoke, time)
   if (daylight.tint) {
     context.globalCompositeOperation = 'multiply'

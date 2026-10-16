@@ -31,7 +31,7 @@ test('the briefing lists today\'s quests with ids, rewards and status', () => {
   assert.match(text, /Screen time: Locked until all 3 of today's quests are approved \(3 still need approval\)/)
   assert.match(text, /Saturday 17 October: "Read for 20 minutes", "Tidy your room", "Move your body"/)
   assert.match(text, /Wake-up alarm: Off\./)
-  assert.match(text, /jump: Space, interact: E, talk to you: Q, menu: Esc/)
+  assert.match(text, /jump: Space, interact: E, talk to you: Q, show or hide the key hints: H, menu: Esc/)
 })
 
 test('the briefing follows submissions, approvals and parent pauses', () => {

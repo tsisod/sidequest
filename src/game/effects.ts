@@ -7,6 +7,7 @@ type Random = () => number
 const dustColors = ['#f3e7c9', '#e4d2a8']
 const twinkleColors = ['#fffbe0', '#c9f1ff', '#ffe58a']
 const smokeColors = ['#d8d2c8', '#bdb6ac', '#a39c93']
+const waterColors = ['#ffffff', '#e2f4fc', '#a9dbef']
 const LANDING_MS = 120
 const pick = (colors: string[], random: Random) => colors[Math.floor(random() * colors.length)]
 
@@ -22,6 +23,20 @@ export function twinkle(at: Point, time: number, random: Random = Math.random): 
     x: at.x + (random() - .5) * 12, y: at.y + (random() - .5) * 8, vx: (random() - .5) * .01, vy: .006 + random() * .008,
     born: time, life: 550 + random() * 350, size: 1, color: pick(twinkleColors, random),
   }
+}
+
+export function splash(at: Point, time: number, count: number, random: Random = Math.random): Particle[] {
+  return Array.from({ length: count }, () => ({
+    x: at.x + (random() - .5) * 12, y: at.y - 2, vx: (random() - .5) * .07, vy: -.03 - random() * .035,
+    born: time, life: 300 + random() * 220, size: random() < .4 ? 2 : 1, color: pick(waterColors, random),
+  }))
+}
+
+export function wake(at: Point, time: number, random: Random = Math.random): Particle[] {
+  return [-1, 1].map(side => ({
+    x: at.x + side * (5 + random() * 3), y: at.y - 2 + random() * 2, vx: side * (.008 + random() * .006), vy: .002,
+    born: time, life: 650 + random() * 250, size: 1, color: pick(waterColors, random),
+  }))
 }
 
 export function smoke(at: Point, time: number, random: Random = Math.random): Particle {

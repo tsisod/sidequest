@@ -49,17 +49,36 @@ test('sprint defaults to Shift and can move to another key, or give Shift away',
   assert.equal(actionFor(shiftJump.keybinds, 'shift'), 'jump')
 })
 
-test('saved keybinds fall back to the defaults when they are damaged', () => {
-  const saved = { up: 'i', left: 'j', down: 'k', right: 'l', sprint: 'shift', jump: ' ', interact: 'e', helper: 'h' }
+test('saved keybinds fall back to the defaults only when they are damaged', () => {
+  const saved = { up: 'i', left: 'j', down: 'k', right: 'l', sprint: 'shift', jump: ' ', interact: 'e', helper: 'q', hints: 'h' }
   assert.deepEqual(parseKeybinds(saved), saved)
   const { sprint: _, ...beforeSprint } = saved
   assert.deepEqual(parseKeybinds(beforeSprint), saved, 'keybinds saved before sprint existed gain Shift')
-  assert.deepEqual(parseKeybinds({ ...saved, helper: undefined }), { ...saved, helper: 'q' })
-  assert.deepEqual(parseKeybinds({ ...saved, helper: undefined, interact: 'q' }), defaultKeybinds)
   assert.deepEqual(parseKeybinds(null), defaultKeybinds)
   assert.deepEqual(parseKeybinds({ ...saved, interact: 'i' }), defaultKeybinds)
   assert.deepEqual(parseKeybinds({ ...saved, jump: 'escape' }), defaultKeybinds)
   assert.deepEqual(parseKeybinds({ ...saved, interact: 7 }), defaultKeybinds)
+})
+
+test('keybinds saved before the hints key existed keep every key and gain H, or a spare key if H is taken', () => {
+  const { hints: _, ...beforeHints } = defaultKeybinds
+  assert.deepEqual(parseKeybinds(beforeHints), defaultKeybinds)
+  const helperOnH = { up: 'i', left: 'j', down: 'k', right: 'l', sprint: 'shift', jump: ' ', interact: 'e', helper: 'h' }
+  const migrated = parseKeybinds(helperOnH)
+  assert.deepEqual(migrated, { ...helperOnH, hints: 'g' })
+  assert.equal(actionFor(migrated, 'h'), 'helper')
+  assert.equal(actionFor(migrated, 'g'), 'hints')
+  const missingHelper = parseKeybinds({ ...helperOnH, helper: undefined, interact: 'q' })
+  assert.equal(new Set(Object.values(missingHelper)).size, Object.keys(missingHelper).length)
+  assert.deepEqual(missingHelper, { ...helperOnH, interact: 'q', helper: 'h', hints: 'g' })
+})
+
+test('H toggles the key hints by default and can be rebound like any action', () => {
+  assert.equal(actionFor(defaultKeybinds, 'h'), 'hints')
+  const moved = rebind(defaultKeybinds, 'hints', 'k')
+  assert.ok(moved.ok)
+  assert.equal(actionFor(moved.keybinds, 'k'), 'hints')
+  assert.equal(actionFor(moved.keybinds, 'h'), null)
 })
 
 test('key labels match the keyboard', () => {

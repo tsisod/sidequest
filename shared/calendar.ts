@@ -39,6 +39,18 @@ export function weekdayOf(date: DateKey): Weekday {
   return weekdays[new Date(`${date}T00:00:00.000Z`).getUTCDay()]
 }
 export function startOfWeek(date: DateKey): DateKey { return addDays(date, 1 - weekdayOf(date)) }
+export function monthStart(date: DateKey, offset = 0): DateKey {
+  if (!Number.isInteger(offset)) throw new Error('Calendar months must be whole numbers.')
+  const value = new Date(`${date.slice(0, 8)}01T00:00:00.000Z`)
+  value.setUTCMonth(value.getUTCMonth() + offset)
+  const result = parseDateKey(value.toISOString().slice(0, 10))
+  if (!result) throw new Error('This calendar date is outside the supported range.')
+  return result
+}
+export function monthGrid(month: DateKey): DateKey[] {
+  const first = startOfWeek(monthStart(month))
+  return Array.from({ length: 42 }, (_, index) => addDays(first, index))
+}
 export function nextDayBoundary(now: number, zone: TimeZone): number {
   let low = Math.floor(now)
   let high = low + 36 * 60 * 60_000

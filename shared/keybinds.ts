@@ -1,5 +1,5 @@
 export type MoveAction = 'up' | 'down' | 'left' | 'right'
-export type GameAction = MoveAction | 'sprint' | 'jump' | 'interact' | 'helper'
+export type GameAction = MoveAction | 'sprint' | 'jump' | 'interact' | 'helper' | 'hints'
 export type Keybinds = Readonly<Record<GameAction, string>>
 export type Rebind = { ok: true; keybinds: Keybinds; swapped: GameAction | null } | { ok: false; message: string }
 
@@ -12,8 +12,10 @@ export const gameActions: readonly { action: GameAction; label: string }[] = [
   { action: 'jump', label: 'Jump' },
   { action: 'interact', label: 'Interact' },
   { action: 'helper', label: 'AI helper' },
+  { action: 'hints', label: 'Show/hide key hints' },
 ]
-export const defaultKeybinds: Keybinds = { up: 'w', left: 'a', down: 's', right: 'd', sprint: 'shift', jump: ' ', interact: 'e', helper: 'q' }
+export const defaultKeybinds: Keybinds = { up: 'w', left: 'a', down: 's', right: 'd', sprint: 'shift', jump: ' ', interact: 'e', helper: 'q', hints: 'h' }
+const spareKeys = [...'hgvbnmzxcfrtyuiopjkl1234567890']
 const arrowKeys = new Map<string, MoveAction>([['arrowup', 'up'], ['arrowdown', 'down'], ['arrowleft', 'left'], ['arrowright', 'right']])
 
 // Single characters as typed in lowercase, plus Shift so sprint can be held with either hand.
@@ -35,12 +37,25 @@ export function rebind(keybinds: Keybinds, action: GameAction, key: string): Reb
   return { ok: true, swapped, keybinds: { ...keybinds, [action]: key, ...swapped ? { [swapped]: keybinds[action] } : {} } }
 }
 
+/** Saved keys are kept; an action added since they were saved takes its default key, or a spare one if that key is in use. */
 export function parseKeybinds(value: unknown): Keybinds {
   if (typeof value !== 'object' || value === null) return defaultKeybinds
   const saved = value as Partial<Record<GameAction, unknown>>
-  const keys = gameActions.map(({ action }) => saved[action] ?? defaultKeybinds[action])
-  if (!keys.every(key => typeof key === 'string' && bindable(key)) || new Set(keys).size !== keys.length) return defaultKeybinds
-  return Object.fromEntries(gameActions.map(({ action }, index) => [action, keys[index]])) as Keybinds
+  const keys = new Map<GameAction, string>()
+  for (const { action } of gameActions) {
+    const key = saved[action]
+    if (key === undefined) continue
+    if (typeof key !== 'string' || !bindable(key) || [...keys.values()].includes(key)) return defaultKeybinds
+    keys.set(action, key)
+  }
+  for (const { action } of gameActions) {
+    if (keys.has(action)) continue
+    const taken = new Set(keys.values())
+    const key = [defaultKeybinds[action], ...spareKeys].find(candidate => !taken.has(candidate))
+    if (!key) return defaultKeybinds
+    keys.set(action, key)
+  }
+  return Object.fromEntries(keys) as Keybinds
 }
 
 export function keyLabel(key: string): string { return key === ' ' ? 'Space' : key === 'shift' ? 'Shift' : key.toUpperCase() }

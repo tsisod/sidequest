@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
 import Icon from '../game/GameIcon'
 import { coin, star, sun } from './pixelArt'
 import { Pixels } from './Pixels'
+import { useSound } from '../sound/SoundContext'
 import './reward.css'
 
 type Vars = CSSProperties & Record<`--${string}`, string | number>
@@ -28,10 +29,21 @@ export function Burst({ kind, count = 12, spread = 70 }: { kind: BurstKind; coun
 }
 
 const coinShower = Array.from({ length: 26 }, (_, index) => ({ left: (index * 41 + 7) % 100, delay: (index * 83) % 900, duration: 1100 + (index * 157) % 700, spin: index % 2 ? 1 : -1 }))
+const COIN_CLINKS = 8
 const emblems = { sun, star }
 
 /** Full-screen XP and gold celebration: rays, a bouncing emblem, the amounts and a coin shower. With no reward it shows the emblem alone. */
 export function RewardCelebration({ reward, emblem, announce }: { reward: Reward | null; emblem: keyof typeof emblems; announce: string }) {
+  const play = useSound()
+  const xp = reward?.xp ?? 0
+  const gold = reward?.gold ?? 0
+  useEffect(() => {
+    const stops = [play('fanfare')]
+    if (xp > 0) stops.push(play('sparkle', .26))
+    if (gold > 0) for (let clink = 0; clink < COIN_CLINKS; clink++) stops.push(play('coin', .42 + clink * .12))
+    if (gold < 0) stops.push(play('loss', .42))
+    return () => { for (const stop of stops) stop() }
+  }, [play, xp, gold])
   return <div className="reward-celebration" role="status" aria-label={reward ? `${announce} ${signed(reward.xp)} XP and ${signed(reward.gold)} gold.` : announce}>
     <div className="reward-rays" aria-hidden="true" />
     {reward && reward.gold > 0 && <div className="reward-coins" aria-hidden="true">{coinShower.map((drop, index) => <i key={index} style={{ '--left': `${drop.left}%`, '--delay': `${drop.delay}ms`, '--duration': `${drop.duration}ms`, '--spin': drop.spin } as Vars}><Pixels art={coin} /></i>)}</div>}

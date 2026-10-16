@@ -1,0 +1,62 @@
+.child-app .game-menu:has(.game-calendar) { width: min(680px, calc(100% - 28px)); }
+.game-calendar { gap: 14px; }
+.game-calendar .cal { --cal-row: 58px; gap: 6px; }
+.game-calendar .cal-title { font: 500 22px/1.2 'Pixelify Sans', monospace; }
+.game-calendar .cal-heading { gap: 8px; }
+.game-calendar .cal-nav, .game-calendar .cal-today { min-width: 44px; min-height: 44px; border: 2px solid #8c592f; border-radius: 0; background: #e8c983; color: #39291f; box-shadow: inset 2px 2px #fff0c7, inset -2px -2px #bb8a4c; }
+.game-calendar .cal-today { padding: 0 10px; font: 16px 'Pixelify Sans', monospace; }
+.game-calendar .cal-nav:hover, .game-calendar .cal-today:hover { background: #f3d693; }
+.game-calendar .cal-nav:active, .game-calendar .cal-today:active { translate: 1px 1px; }
+.game-calendar .cal-weekdays { color: #6e5037; font: 600 11px 'Manrope', sans-serif; }
+.game-calendar .cal-grid { gap: 3px; }
+.game-calendar .cal-day { padding: 4px; border: 2px solid #d9b77d; border-radius: 0; background: #fff0c7; color: #39291f; font: 16px 'Pixelify Sans', monospace; }
+.game-calendar .cal-day:hover { border-color: #8c592f; background: #f3d693; }
+.game-calendar .cal-day[data-outside] { border-color: transparent; background: #f6e5b7; color: #9e906c; }
+.game-calendar .cal-day[data-past]:not([data-outside]) { color: #6e5037; }
+.game-calendar .cal-day[aria-pressed='true'] { border-color: #39291f; background: #e8c983; }
+.game-calendar .cal-date { width: 26px; height: 26px; }
+.game-calendar .cal-day[aria-current='date'] .cal-date { background: #fffaf0; color: #842f37; box-shadow: 0 0 0 2px #c4533a; }
+.game-calendar .cal-event { padding: 1px 4px; background: #cfe3ef; color: #24425a; font: 600 10px/1.4 'Manrope', sans-serif; }
+.game-calendar .cal-event[data-by='child'] { background: #e4ebd5; color: #425c2e; }
+.game-calendar .cal-more { color: #6e5037; font: 600 10px 'Manrope', sans-serif; }
+@container cal (max-width: 600px) {
+  .game-calendar .cal-event { width: 6px; height: 6px; border-radius: 0; background: #3f6e8c; }
+  .game-calendar .cal-event[data-by='child'] { background: #5d793e; }
+}
+
+.game-calendar-day { display: grid; gap: 10px; padding-top: 12px; border-top: 4px double #b57b43; }
+.game-calendar-day h3 { display: flex; align-items: baseline; gap: 10px; margin: 0; font: 500 20px 'Pixelify Sans', monospace; }
+.game-calendar-day h3 small { color: #842f37; font: 600 12px 'Manrope', sans-serif; }
+.game-calendar .cal-plan { display: grid; gap: 12px; }
+.game-calendar .cal-plan-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.game-calendar .cal-plan-event { display: flex; align-items: center; gap: 10px; min-height: 52px; border-bottom: 2px solid #d9b77d; }
+.game-calendar .cal-plan-dot { flex: none; width: 10px; height: 10px; background: #3f6e8c; box-shadow: 1px 1px #39291f; }
+.game-calendar .cal-plan-event[data-by='child'] .cal-plan-dot { background: #5d793e; }
+.game-calendar .cal-plan-copy { display: grid; flex: 1; gap: 1px; min-width: 0; }
+.game-calendar .cal-plan-copy strong { font: 500 17px 'Pixelify Sans', monospace; overflow-wrap: anywhere; }
+.game-calendar .cal-plan-copy small { color: #6e5037; font: 12px 'Manrope', sans-serif; }
+.game-calendar .cal-plan-trash { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border: 0; background: transparent; color: #842f37; }
+.game-calendar .cal-plan-trash:hover:not(:disabled) { background: #f9e4d8; }
+.game-calendar .cal-plan-confirm { display: flex; flex: none; gap: 6px; }
+.game-calendar .cal-plan-confirm button { min-height: 40px; padding: 0 10px; border: 2px solid #8c592f; background: #e8c983; color: #39291f; box-shadow: inset 2px 2px #fff0c7, inset -2px -2px #bb8a4c; font: 15px 'Pixelify Sans', monospace; }
+.game-calendar .cal-plan-confirm .cal-plan-delete { border-color: #842f37; background: #c4533a; color: #fffaf0; box-shadow: inset 2px 2px #dd7a5f, inset -2px -2px #8f3527; }
+.game-calendar .cal-plan-empty, .game-calendar .cal-plan-note { margin: 0; color: #6e5037; font: 13px/1.6 'Manrope', sans-serif; }
+.game-calendar .cal-plan-form { display: grid; gap: 10px; }
+.game-calendar .cal-plan-field { display: grid; gap: 6px; font-size: 18px; }
+.game-calendar .cal-plan-field input { min-height: 44px; padding: 6px 10px; border: 2px solid #8c592f; border-radius: 0; background: #fffaf0; color: #39291f; font: 15px 'Manrope', sans-serif; }
+.game-calendar .cal-plan-field input:focus-visible { outline: 2px solid #39291f; outline-offset: 1px; }
+.game-calendar .cal-plan-repeat { margin: 0; padding: 0; border: 0; }
+.game-calendar .cal-plan-repeat legend { padding: 0 0 6px; font-size: 18px; }
+.game-calendar .cal-plan-repeat > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.game-calendar .cal-plan-repeat label { position: relative; display: grid; place-items: center; min-height: 44px; border: 2px solid #d9b77d; background: #fff0c7; font: 17px 'Pixelify Sans', monospace; cursor: pointer; }
+.game-calendar .cal-plan-repeat input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.game-calendar .cal-plan-repeat label:hover { border-color: #8c592f; }
+.game-calendar .cal-plan-repeat label:has(input:checked) { border-color: #425c2e; background: #c8d9a8; box-shadow: inset 2px 2px #e4ebd5, inset -2px -2px #8fa86a; }
+.game-calendar .cal-plan-repeat label:has(input:focus-visible) { outline: 2px solid #39291f; outline-offset: 2px; }
+.game-calendar .cal-plan-preview { margin: 0; padding: 6px 8px; background: #e4ebd5; color: #425c2e; font: 600 13px/1.5 'Manrope', sans-serif; }
+.game-calendar .cal-plan-error { margin: 0; padding: 6px 8px; background: #f9e4d8; color: #842f37; font: 600 13px/1.5 'Manrope', sans-serif; }
+.game-calendar .cal-plan-submit { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 2px solid #8c592f; background: #e8c983; color: #39291f; box-shadow: inset 2px 2px #fff0c7, inset -2px -2px #bb8a4c; font: 18px 'Pixelify Sans', monospace; cursor: pointer; }
+.game-calendar .cal-plan-submit:hover:not(:disabled) { background: #f3d693; }
+.game-calendar .cal-plan-submit .game-ui-icon { display: none; }
+.game-calendar :is(.cal-plan-submit, .cal-plan-confirm button):disabled { cursor: default; opacity: .6; }
+@media (prefers-reduced-motion: reduce) { .game-calendar :is(.cal-nav, .cal-today):active { translate: none; } }

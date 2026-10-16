@@ -39,6 +39,9 @@ export type Quest = {
 
 export type ProjectDay = { date: DateKey; quests: Quest[] }
 
+export type CalendarEvent = { id: string; title: string; schedule: Schedule; createdBy: Role }
+export type EventReminder = { key: string; title: string }
+
 export type PlayClock =
   | { kind: 'paused'; remainingMs: number }
   | { kind: 'running'; endsAt: number; startedAt: number }
@@ -76,6 +79,7 @@ export type Family = {
   childName: string
   quests: Quest[]
   templates: TaskTemplate[]
+  events: CalendarEvent[]
   timeZone: TimeZone
   sessionDay: DateKey
   allowanceGranted: boolean
@@ -92,6 +96,8 @@ export type FamilyCommand =
   | { kind: 'complete-wake-game'; date: DateKey; scheduledAt: number; stage: WakeStage; game: WakeGameKind }
   | { kind: 'add-template'; id: string; title: string; xp: number; gold: number; place: Place; schedule: Schedule }
   | { kind: 'remove-template'; templateId: string }
+  | { kind: 'add-event'; id: string; title: string; schedule: Schedule }
+  | { kind: 'remove-event'; eventId: string }
   | { kind: 'approve'; questId: string }
   | { kind: 'return'; questId: string }
   | { kind: 'set-screen-time'; minutes: number }

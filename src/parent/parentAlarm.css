@@ -6,7 +6,7 @@
 .p-alarm-status { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--p-muted); background: var(--p-raised); }
 .p-alarm-enabled { color: var(--p-accent-ink); background: var(--p-accent-soft); }
 .p-alarm-card > .button { flex-shrink: 0; }
-.p-alarm-notice { font-size: 13px; color: var(--p-accent-ink); margin: -13px 0 22px !important; }
+.p-alarm-notice { font-size: 13px; color: var(--p-accent-ink); margin: -13px 0 22px !important; animation: p-message-out 250ms var(--ease-out) 4750ms forwards; }
 .p-alarm-dialog form { margin-top: 24px; }
 .p-alarm-dialog input[type='time'] { font-size: 28px; font-variant-numeric: tabular-nums; min-height: 70px; }
 .p-alarm-toggle { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--p-line); cursor: pointer; }

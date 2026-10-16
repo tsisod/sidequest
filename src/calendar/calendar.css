@@ -1,0 +1,36 @@
+.cal { --cal-ease: cubic-bezier(.2, .8, .2, 1); --cal-row: 64px; container: cal / inline-size; display: grid; gap: 8px; min-width: 0; }
+.cal-header { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.cal-heading { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
+.cal-title { margin: 0; overflow: hidden; white-space: nowrap; }
+.cal-title > span { display: inline-block; }
+.cal-title > span[data-motion='enter'] { animation: cal-title-in 260ms var(--cal-ease) both; }
+.cal-nav { display: grid; place-items: center; padding: 0; cursor: pointer; }
+.cal-nav-prev .cal-nav-icon { rotate: 180deg; }
+.cal-weekdays, .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.cal-weekdays > span { overflow: hidden; text-align: center; text-overflow: clip; white-space: nowrap; }
+.cal-viewport { display: grid; overflow: hidden; }
+.cal-grid { grid-area: 1 / 1; grid-template-rows: repeat(6, minmax(var(--cal-row), auto)); }
+.cal-grid[data-motion='enter'] { animation: cal-enter 320ms var(--cal-ease) both; }
+.cal-grid[data-motion='leave'] { animation: cal-leave 320ms var(--cal-ease) both; pointer-events: none; }
+.cal-day { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-width: 0; margin: 0; text-align: left; cursor: pointer; }
+.cal-date { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; font-variant-numeric: tabular-nums; line-height: 1; }
+.cal-events { display: grid; gap: 3px; min-width: 0; }
+.cal-event { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-more { white-space: nowrap; }
+
+@container cal (max-width: 600px) {
+  .cal-day { align-items: center; }
+  .cal-events { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; }
+  .cal-event { width: 7px; height: 7px; padding: 0 !important; border-radius: 50%; font-size: 0 !important; }
+  .cal-more { display: none; }
+}
+
+@keyframes cal-enter { from { opacity: 0; transform: translateX(calc(var(--cal-dir) * 36%)); } }
+@keyframes cal-leave { to { opacity: 0; transform: translateX(calc(var(--cal-dir) * -36%)); } }
+@keyframes cal-title-in { from { opacity: 0; transform: translateX(calc(var(--cal-dir) * 24px)); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .cal-grid[data-motion='leave'] { display: none; }
+  .cal-grid[data-motion='enter'], .cal-title > span[data-motion='enter'] { animation: cal-fade 160ms linear both; }
+}
+@keyframes cal-fade { from { opacity: 0; } }

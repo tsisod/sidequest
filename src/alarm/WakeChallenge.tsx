@@ -5,6 +5,7 @@ import { randomWakeGame } from '../../shared/wakeAlarm'
 import { bonkedMole, burrow, mole } from '../components/pixelArt'
 import { PixelRuns } from '../components/Pixels'
 import { Burst } from '../components/RewardCelebration'
+import { useSound } from '../sound/SoundContext'
 import './alarm.css'
 
 type Hud = (done: number, total: number) => ReactNode
@@ -81,6 +82,7 @@ function Moles({ onComplete, disabled, hud }: GameProps) {
   const nextId = useRef(0)
   const board = useRef<HTMLDivElement>(null)
   const complete = useRef(onComplete)
+  const play = useSound()
   useEffect(() => { complete.current = onComplete })
   // React to hits the reducer actually counted: a tap that loses the race with a retreating mole changes nothing.
   useEffect(() => { if (field.hits > 0) shake(board.current) }, [field.hits])
@@ -102,6 +104,7 @@ function Moles({ onComplete, disabled, hud }: GameProps) {
   function whack(index: number) {
     const hole = field.holes[index]
     if (disabled || won || hole.state !== 'up') return
+    play('hit')
     dispatch({ kind: 'whack', id: hole.id })
     later(timers, 520, () => dispatch({ kind: 'clear', id: hole.id }))
   }
@@ -136,18 +139,22 @@ function Memory({ onComplete, disabled, hud }: GameProps) {
   const turnLocked = useRef(false)
   const won = useRef(false)
   const timers = useTimers()
+  const play = useSound()
   function flip(index: number) {
     if (disabled || won.current || turnLocked.current || matched.includes(index) || flipped.includes(index)) return
+    play('flip')
     if (!flipped.length) { setFlipped([index]); return }
     const first = flipped[0]
     setFlipped([first, index])
     if (deck[first] === deck[index]) {
+      play('match', .3)
       const next = [...matched, first, index]
       turnLocked.current = true
       later(timers, 380, () => { setMatched(next); setFlipped([]); turnLocked.current = false })
       if (next.length === 6) { won.current = true; later(timers, 900, onComplete) }
     } else {
       turnLocked.current = true
+      play('mismatch', .56)
       later(timers, 560, () => setWrong([first, index]))
       later(timers, 1050, () => { setFlipped([]); setWrong([]); turnLocked.current = false })
     }

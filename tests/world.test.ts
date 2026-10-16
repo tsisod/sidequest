@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { canStand, COLUMNS, fence, gatePoint, heroStart, moveHero, nearestVillager, npcs, props, ROWS, talkSpots, terrainAt, TILE, WORLD } from '../src/game/world.ts'
+import { canStand, COLUMNS, fence, gatePoint, heroStart, isSwimming, moveHero, nearestVillager, npcs, props, ROWS, talkSpots, terrainAt, TILE, WORLD } from '../src/game/world.ts'
 import type { Point } from '../src/game/world.ts'
 import { cameraFor, gateFrame, pixelScale } from '../src/game/farmScene.ts'
 
@@ -55,13 +55,33 @@ test('the fenced field is entered through its gate, not through the fence', () =
   assert.equal(gateFrame(heroStart), 0)
 })
 
-test('trees, buildings, people and water are solid', () => {
+test('trees, buildings and people are solid', () => {
   for (const prop of props) {
     if (['oak', 'round', 'pine', 'fruit', 'cottage', 'library', 'windmill', 'forge'].includes(prop.kind)) assert.equal(canStand({ x: prop.x, y: prop.y - 4 }), false, `${prop.kind} at ${prop.x},${prop.y}`)
   }
   for (const npc of npcs) assert.equal(canStand({ x: npc.x, y: npc.y - 2 }), false, npc.kind)
-  assert.equal(canStand({ x: 160, y: 440 }), false)
-  assert.equal(reaches({ x: 160, y: 440 }), false)
+})
+
+test('the lake can be swum across, and the shore bank is waded rather than swum', () => {
+  const middle = { x: 160, y: 440 }
+  assert.equal(canStand(middle), true)
+  assert.equal(reaches(middle), true)
+  assert.equal(isSwimming(middle), true)
+  const lakeTop = 22 * TILE
+  assert.equal(isSwimming({ x: 160, y: lakeTop + 3 }), false)
+  assert.equal(isSwimming({ x: 160, y: lakeTop + 12 }), true)
+  assert.equal(isSwimming(heroStart), false)
+})
+
+test('every building door and the blacksmith open onto a path, and the farm path meets the gate', () => {
+  const tile = (point: Point) => terrainAt(Math.floor(point.x / TILE), Math.floor(point.y / TILE))
+  for (const prop of props) if (['cottage', 'library', 'windmill', 'forge'].includes(prop.kind)) assert.equal(tile({ x: prop.x, y: prop.y + 8 }), 'path', `${prop.kind} door`)
+  const smith = npcs.find(npc => npc.kind === 'smith')
+  assert.ok(smith)
+  assert.equal(tile(smith), 'path')
+  for (let row = fence.top - 8; row < fence.top; row++) for (const column of [fence.gate.column, fence.gate.column + 1]) assert.equal(terrainAt(column, row), 'path', `farm path ${column},${row}`)
+  assert.equal(terrainAt(fence.gate.column, fence.top), 'path')
+  assert.equal(terrainAt(fence.gate.column + 1, fence.top), 'grass')
 })
 
 test('the angler stands on the shore and casts into the lake', () => {

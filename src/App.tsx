@@ -6,6 +6,9 @@ import Icon, { PixelStar } from './components/Icon'
 import ParentDashboard from './parent/ParentDashboard'
 import ChildGame from './game/ChildGame'
 import { parentViewForPathname, roleForPathname, routes } from './routes'
+import type { ParentView } from './routes'
+
+const parentTitles: Record<ParentView, string> = { dashboard: 'Parent dashboard', calendar: 'Calendar', inbox: 'Inbox' }
 
 function useClockNow(offset: number): number {
   const [now, setNow] = useState(() => Date.now() + offset)
@@ -32,7 +35,7 @@ function ConnectedApp() {
   const now = useClockNow(connection.state.kind === 'ready' ? connection.state.serverOffsetMs : 0)
 
   useEffect(() => {
-    document.title = role === 'child' ? 'Willowbrook · Sidequest' : parentViewForPathname(window.location.pathname) === 'inbox' ? 'Inbox · Sidequest' : 'Parent dashboard · Sidequest'
+    document.title = `${role === 'child' ? 'Willowbrook' : parentTitles[parentViewForPathname(window.location.pathname)]} · Sidequest`
   }, [role])
 
   if (connection.state.kind !== 'ready') return <ConnectionGate connection={connection} role={role} />

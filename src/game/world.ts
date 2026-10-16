@@ -20,14 +20,14 @@ const terrainRows = [
   '..............##...............................##...............',
   '............#########################################...........',
   '............#########################################...........',
-  '...............................##.........#.....................',
-  '...............................##.........#.....................',
-  '...............................##.........#.....................',
-  '...............................##.........#.....................',
-  '...............................##.........#.....................',
-  '...............................##.........#.....................',
-  '........~~~~~~~................##.........#######...............',
-  '.....~~~~~~~~~~~~~.............##.........#######...............',
+  '...............................##.........##....................',
+  '...............................##.........##....................',
+  '...............................##.........##....................',
+  '...............................##.........##....................',
+  '...............................##.........##....................',
+  '...............................##.........##....................',
+  '........~~~~~~~................##....#############..............',
+  '.....~~~~~~~~~~~~~.............##....#############..............',
   '.....~~~~~~~~~~~~~.............##.........#.....................',
   '.....~~~~~~~~~~~~~.............##......================.........',
   '.....~~~~~~~~~~~~~.##############......================.........',
@@ -84,17 +84,12 @@ const footprints: Record<PropKind, Rect | null> = {
   mushrooms: null,
 }
 
-const along = (kind: PropKind, y: number, xs: number[]): Prop[] => xs.map(x => ({ kind, x, y }))
 const forestEdge: Prop[] = [
-  ...along('round', 66, [-6, 102, 210, 318, 426, 534, 642, 750, 858, 966]),
-  ...along('oak', 84, [48, 156, 264, 372, 480, 588, 696, 804, 912, 1020]),
-  ...[132, 186, 240, 294, 348, 402, 456, 510, 564].flatMap((y, i) => [
-    { kind: i % 2 ? 'pine' : 'round', x: 12 + (i % 2) * 8, y },
-    { kind: i % 2 ? 'round' : 'pine', x: 1012 - (i % 2) * 8, y },
-  ] satisfies Prop[]),
-  ...along('oak', 660, [40, 128, 216, 304, 392, 634, 722, 810, 898, 986]),
-  ...along('round', 636, [84, 260, 436, 590, 766, 942]),
-  ...along('pine', 646, [172, 348, 678, 854]),
+  { kind: 'round', x: 24, y: 76 }, { kind: 'oak', x: 150, y: 84 }, { kind: 'pine', x: 300, y: 72 }, { kind: 'round', x: 470, y: 78 },
+  { kind: 'oak', x: 700, y: 84 }, { kind: 'pine', x: 846, y: 72 }, { kind: 'round', x: 1000, y: 78 },
+  { kind: 'pine', x: 18, y: 250 }, { kind: 'round', x: 14, y: 590 },
+  { kind: 'round', x: 1010, y: 236 }, { kind: 'pine', x: 1012, y: 330 },
+  { kind: 'pine', x: 40, y: 652 }, { kind: 'oak', x: 392, y: 662 }, { kind: 'round', x: 640, y: 656 }, { kind: 'pine', x: 790, y: 650 }, { kind: 'oak', x: 1000, y: 662 },
 ]
 const village: Prop[] = [
   { kind: 'cottage', x: 240, y: 208 },
@@ -105,12 +100,12 @@ const village: Prop[] = [
   { kind: 'round', x: 610, y: 130 },
   { kind: 'fruit', x: 900, y: 142 },
   { kind: 'fruit', x: 950, y: 214 },
-  { kind: 'fruit', x: 870, y: 236 },
+  { kind: 'fruit', x: 888, y: 244 },
   { kind: 'fruit', x: 90, y: 168 },
   { kind: 'fruit', x: 110, y: 296 },
   { kind: 'fruit', x: 250, y: 326 },
   { kind: 'oak', x: 420, y: 380 },
-  { kind: 'round', x: 360, y: 470 },
+  { kind: 'round', x: 372, y: 516 },
   { kind: 'pine', x: 452, y: 520 },
   { kind: 'oak', x: 160, y: 586 },
   { kind: 'round', x: 300, y: 590 },
@@ -141,7 +136,7 @@ export const props: Prop[] = [...forestEdge, ...village]
 
 export const npcs: Npc[] = [
   { kind: 'angler', x: 300, y: 446 },
-  { kind: 'smith', x: 836, y: 372 },
+  { kind: 'smith', x: 788, y: 372 },
   { kind: 'librarian', x: 716, y: 214 },
   { kind: 'gardener', x: 830, y: 470 },
   { kind: 'housekeeper', x: 182, y: 300 },
@@ -189,11 +184,15 @@ const hero = { halfWidth: 5, height: 4 }
 
 const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h
 const wet = (x: number, y: number) => terrainAt(Math.floor(x / TILE), Math.floor(y / TILE)) === 'water'
+const swimDepth: readonly Point[] = [{ x: 0, y: 0 }, { x: -6, y: 0 }, { x: 6, y: 0 }, { x: 0, y: -6 }, { x: 0, y: 4 }]
+
+export function isSwimming(point: Point): boolean {
+  return swimDepth.every(offset => wet(point.x + offset.x, point.y + offset.y))
+}
 
 export function canStand(point: Point): boolean {
   if (point.x < bounds.left || point.x > bounds.right || point.y < bounds.top || point.y > bounds.bottom) return false
   const box = { x: point.x - hero.halfWidth, y: point.y - hero.height, w: hero.halfWidth * 2, h: hero.height }
-  if (wet(box.x, box.y) || wet(box.x + box.w, box.y) || wet(box.x, point.y) || wet(box.x + box.w, point.y)) return false
   return !blockers.some(blocker => overlaps(box, blocker))
 }
 

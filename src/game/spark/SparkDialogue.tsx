@@ -8,6 +8,7 @@ import type { DialogueAudio } from '../dialogue/DialogueAudio'
 import { dialoguePages } from '../dialogue/dialoguePages'
 import { VoicedText } from '../dialogue/VoicedText'
 import { useVoiceLines } from '../dialogue/voiceLines'
+import { useSound } from '../../sound/SoundContext'
 import '../dialogue/dialogue.css'
 import './spark.css'
 
@@ -34,13 +35,15 @@ export default function SparkDialogue({ spark, childName, keybinds, turns, audio
   const [sent, setSent] = useState<string[]>([])
   const last = turns.at(-1)
   const waiting = thinking || last?.role === 'child'
-  const question = [...turns].reverse().find(turn => turn.role === 'child')?.text
+  const asked = turns.at(last?.role === 'spark' ? -2 : -1)
+  const question = asked?.role === 'child' ? asked.text : undefined
   const text = last?.role === 'spark' ? last.text : `Hi ${childName}! I'm ${spark.name}. Ask me what to do today, tell me when you finish a quest, or ask me anything.`
   const pages = useMemo(() => dialoguePages(text), [text])
   const voices = useVoiceLines(pages, spark.voice, speak)
   const [paging, setPaging] = useState({ text, page: 0 })
   const shown = Math.min(paging.text === text ? paging.page : 0, pages.length - 1)
   const lastPage = shown === pages.length - 1
+  const play = useSound()
 
   useLayoutEffect(() => {
     if (!dialog.current?.open) dialog.current?.showModal()
@@ -57,16 +60,19 @@ export default function SparkDialogue({ spark, childName, keybinds, turns, audio
     setError('')
     setSent([])
     setThinking(true)
+    play('send')
     onTurns(next)
     const result = await ask({ name: spark.name, keybinds, turns: next })
     setThinking(false)
     if (result.ok) {
       onTurns([...next, { role: 'spark', text: result.reply }])
       setSent(result.submitted)
+      play(result.submitted.length ? 'confirm' : 'reply')
     } else {
       onTurns([...turns])
       setDraft(asked)
       setError(result.message)
+      play('error')
     }
   }
 
@@ -84,7 +90,7 @@ export default function SparkDialogue({ spark, childName, keybinds, turns, audio
         {error && <p className="spark-error" role="alert">{error}</p>}
       </div>
       <div className="spark-actions">
-        {!waiting && !lastPage ? <button aria-label="Continue" className="dialogue-advance" onClick={() => setPaging({ text, page: shown + 1 })} type="button"><span>Continue</span><Icon name="cursor" size={16} /></button> : null}
+        {!waiting && !lastPage ? <button aria-label="Continue" className="dialogue-advance" onClick={() => { play('advance'); setPaging({ text, page: shown + 1 }) }} type="button"><span>Continue</span><Icon name="cursor" size={16} /></button> : null}
         {!waiting && lastPage && <div className="spark-suggestions">{suggestions.map(suggestion => <button key={suggestion} type="button" className="spark-suggestion" onClick={() => void send(suggestion)}>{suggestion}</button>)}</div>}
         <form className="spark-composer" onSubmit={event => { event.preventDefault(); void send(draft) }}>
           <label className="sr-only" htmlFor="spark-message">Message for {spark.name}</label>

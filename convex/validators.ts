@@ -14,6 +14,7 @@ export const scheduleValidator = v.union(
   v.object({ kind: v.literal('weekly'), from: v.string(), weekdays: v.array(v.union(v.literal(1), v.literal(2), v.literal(3), v.literal(4), v.literal(5), v.literal(6), v.literal(7))) }),
 )
 const template = v.object({ ...baseQuest, schedule: scheduleValidator, endsBefore: v.union(v.string(), v.null()) })
+const calendarEvent = v.object({ id: v.string(), title: v.string(), schedule: scheduleValidator, createdBy: roleValidator })
 const quest = progress({ ...baseQuest, templateId: v.string(), date: v.string() })
 const wakeSound = v.union(v.literal('classic'), v.literal('chimes'), v.literal('birds'))
 const wakeGame = v.union(v.literal('moles'), v.literal('memory'))
@@ -27,7 +28,7 @@ const wakeResult = v.object({ date: v.string(), scheduledAt: v.number(), wokeAt:
 export const wakeAlarmValidator = v.object({ enabled: v.boolean(), time: v.string(), startsOn: v.string(), sound: wakeSound, progress: wakeProgress, results: v.optional(v.array(wakeResult)) })
 export const familyValidator = v.object({
   version: v.literal(3), id: v.string(), code: v.string(), childName: v.string(), createdAt: v.number(), screenMinutes: v.number(),
-  wakeAlarm: v.optional(wakeAlarmValidator), timeZone: v.string(), sessionDay: v.string(), allowanceGranted: v.boolean(), allowanceUsedMs: v.number(), templates: v.array(template), quests: v.array(quest),
+  wakeAlarm: v.optional(wakeAlarmValidator), timeZone: v.string(), sessionDay: v.string(), allowanceGranted: v.boolean(), allowanceUsedMs: v.number(), templates: v.array(template), events: v.optional(v.array(calendarEvent)), quests: v.array(quest),
   clock: v.union(
     v.object({ kind: v.literal('paused'), remainingMs: v.number() }),
     v.object({ kind: v.literal('running'), endsAt: v.number(), startedAt: v.number() }),
@@ -40,6 +41,8 @@ export const commandValidator = v.union(
   v.object({ kind: v.literal('complete-wake-game'), date: v.string(), scheduledAt: v.number(), stage: wakeStage, game: wakeGame }),
   v.object({ kind: v.literal('add-template'), ...baseQuest, schedule: scheduleValidator }),
   v.object({ kind: v.literal('remove-template'), templateId: v.string() }),
+  v.object({ kind: v.literal('add-event'), id: v.string(), title: v.string(), schedule: scheduleValidator }),
+  v.object({ kind: v.literal('remove-event'), eventId: v.string() }),
   v.object({ kind: v.literal('approve'), questId: v.string() }),
   v.object({ kind: v.literal('return'), questId: v.string() }),
   v.object({ kind: v.literal('set-screen-time'), minutes: v.number() }),

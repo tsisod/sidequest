@@ -59,5 +59,5 @@ export function migrateV2Family(value: unknown, { now, timeZone }: { now: number
   const remaining = legacy.clock.kind === 'running' ? Math.max(0, legacy.clock.endsAt - now) : legacy.clock.remainingMs
   let clock: PlayClock = { kind: legacy.clock.kind === 'blocked' ? 'blocked' : 'paused', remainingMs: allowanceGranted ? remaining : 0 }
   if (allowanceGranted && legacy.clock.kind === 'running' && remaining > 0) clock = { kind: 'running', startedAt: now, endsAt: Math.min(legacy.clock.endsAt, nextDayBoundary(now, timeZone)) }
-  return { version: 3, id: legacy.id, code: legacy.code, childName: legacy.childName, createdAt: legacy.createdAt, screenMinutes: legacy.screenMinutes, wakeAlarm: defaultWakeAlarm({ date: sessionDay }), timeZone, sessionDay, allowanceGranted, allowanceUsedMs: allowanceGranted ? Math.max(0, legacy.screenMinutes * 60_000 - remaining) : 0, templates, quests, clock }
+  return { version: 3, id: legacy.id, code: legacy.code, childName: legacy.childName, createdAt: legacy.createdAt, screenMinutes: legacy.screenMinutes, wakeAlarm: defaultWakeAlarm({ date: sessionDay }), timeZone, sessionDay, allowanceGranted, allowanceUsedMs: allowanceGranted ? Math.max(0, legacy.screenMinutes * 60_000 - remaining) : 0, templates, events: [], quests, clock }
 }

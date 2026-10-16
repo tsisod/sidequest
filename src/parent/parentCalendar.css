@@ -1,0 +1,79 @@
+.p-calendar-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--p-muted); font-size: 13px; }
+.p-calendar-legend > span { display: inline-flex; align-items: center; gap: 8px; }
+.p-calendar-legend > span::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--p-accent-secondary); }
+.p-calendar-legend > span[data-by='child']::before { background: var(--p-info-ink); }
+
+.p-calendar { --cal-row: clamp(72px, calc((100dvh - 390px) / 6), 140px); gap: 0; padding: 20px; }
+.p-calendar .cal-header { padding-bottom: 16px; }
+.p-calendar .cal-title { font-size: 22px; font-weight: 700; line-height: 1.3; letter-spacing: -.4px; }
+.p-calendar .cal-nav { width: 48px; height: 48px; border: 1px solid var(--p-line); border-radius: 50%; background: var(--p-surface); color: var(--p-ink); transition: background-color 100ms var(--ease-out), border-color 100ms var(--ease-out), transform 100ms var(--ease-out); }
+.p-calendar .cal-nav:hover { border-color: var(--p-control-line); background: var(--p-raised); }
+.p-calendar .cal-nav:active { transform: scale(.94); }
+.p-calendar .cal-today { min-height: 36px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--p-raised); color: var(--p-ink); font-size: 13px; font-weight: 650; animation: p-pop 150ms var(--ease-out); }
+.p-calendar .cal-today:hover { background: var(--p-selected); }
+.p-calendar .cal-weekdays { padding-bottom: 8px; color: var(--p-muted); font-size: 12px; font-weight: 650; letter-spacing: .3px; text-transform: uppercase; }
+.p-calendar .cal-grid { gap: 1px; overflow: hidden; border: 1px solid var(--p-line); border-radius: 12px; background: var(--p-line); }
+.p-calendar .cal-day { padding: 8px; border: 0; border-radius: 0; background: var(--p-surface); color: var(--p-ink); transition: background-color 100ms var(--ease-out); }
+.p-calendar .cal-day:hover { background: var(--p-raised); }
+.p-calendar .cal-day:focus-visible { position: relative; z-index: 1; outline-offset: -2px; }
+.p-calendar .cal-day[data-outside] { background: color-mix(in srgb, var(--p-raised) 55%, var(--p-surface)); }
+.p-calendar .cal-day[data-outside] .cal-date, .p-calendar .cal-day[data-past] .cal-date { color: var(--p-muted); }
+.p-calendar .cal-day[aria-pressed='true'] { background: var(--p-accent-soft); }
+.p-calendar .cal-date { font-size: 13px; font-weight: 650; }
+.p-calendar .cal-day[aria-current='date'] .cal-date { background: var(--p-accent-soft); color: var(--p-accent-ink); box-shadow: 0 0 0 2px var(--p-primary); }
+.p-calendar .cal-event { padding: 2px 8px; border-radius: 6px; background: var(--p-accent-soft); color: var(--p-accent-ink); font-size: 12px; font-weight: 600; line-height: 1.5; }
+.p-calendar .cal-event[data-by='child'] { background: var(--p-info-bg); color: var(--p-info-ink); }
+.p-calendar .cal-day[data-past] .cal-event { opacity: .7; }
+.p-calendar .cal-more { padding-left: 8px; color: var(--p-muted); font-size: 12px; font-weight: 650; }
+
+.p-calendar-dialog .p-dialog-heading h2 small { display: block; color: var(--p-muted); font-size: 12px; font-weight: 600; }
+.p-app .cal-plan { display: grid; gap: 20px; padding: 16px 0 24px; }
+.p-app .cal-plan-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.p-app .cal-plan-event { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 6px 0; animation: p-pop 150ms var(--ease-out); }
+.p-app .cal-plan-event + .cal-plan-event { border-top: 1px solid var(--p-line); }
+.p-app .cal-plan-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--p-accent-secondary); }
+.p-app .cal-plan-event[data-by='child'] .cal-plan-dot { background: var(--p-info-ink); }
+.p-app .cal-plan-copy { display: grid; flex: 1; min-width: 0; }
+.p-app .cal-plan-copy strong { font-size: 15px; font-weight: 650; overflow-wrap: anywhere; }
+.p-app .cal-plan-copy small { color: var(--p-muted); font-size: 13px; }
+.p-app .cal-plan-trash { display: grid; place-items: center; flex: none; width: 44px; height: 44px; margin-right: -10px; border: 0; border-radius: 50%; background: transparent; color: var(--p-muted); transition: background-color 100ms var(--ease-out), color 100ms var(--ease-out); }
+.p-app .cal-plan-trash:hover:not(:disabled) { background: var(--p-danger-bg); color: var(--p-danger-ink); }
+.p-app .cal-plan-confirm { display: flex; flex: none; gap: 4px; animation: p-pop 150ms var(--ease-out); }
+.p-app .cal-plan-confirm button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; font-size: 13px; font-weight: 650; }
+.p-app .cal-plan-keep { background: transparent; color: var(--p-ink); text-decoration: underline; text-underline-offset: 3px; }
+.p-app .cal-plan-keep:hover:not(:disabled) { background: var(--p-raised); }
+.p-app .cal-plan-delete { background: var(--p-danger-ink); color: var(--p-surface); }
+.p-app .cal-plan-empty, .p-app .cal-plan-note { color: var(--p-muted); font-size: 14px; }
+.p-app .cal-plan-form { display: grid; gap: 16px; padding-top: 4px; }
+.p-app .cal-plan-field { display: grid; gap: 8px; font-size: 13px; font-weight: 650; }
+.p-app .cal-plan-field input { width: 100%; min-height: 52px; padding: 12px 14px; border: 1px solid var(--p-control-line); border-radius: 10px; background: var(--p-surface); color: var(--p-ink); font-size: 15px; font-weight: 500; transition: border-color 100ms var(--ease-out), box-shadow 100ms var(--ease-out); }
+.p-app .cal-plan-field input:hover:not(:disabled) { border-color: var(--p-ink); }
+.p-app .cal-plan-field input:focus-visible { outline: none; border-color: var(--p-ink); box-shadow: 0 0 0 1px var(--p-ink); }
+.p-app .cal-plan-field input::placeholder { color: var(--p-muted); opacity: .85; }
+.p-app .cal-plan-repeat { margin: 0; padding: 0; border: 0; }
+.p-app .cal-plan-repeat legend { padding: 0 0 8px; font-size: 13px; font-weight: 650; }
+.p-app .cal-plan-repeat > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 4px; border-radius: 12px; background: var(--p-raised); }
+.p-app .cal-plan-repeat label { position: relative; display: grid; place-items: center; min-height: 40px; border-radius: 9px; color: var(--p-muted); font-size: 14px; font-weight: 650; cursor: pointer; transition: background-color 150ms var(--ease-out), color 150ms var(--ease-out), box-shadow 150ms var(--ease-out); }
+.p-app .cal-plan-repeat input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.p-app .cal-plan-repeat label:hover { color: var(--p-ink); }
+.p-app .cal-plan-repeat label:has(input:checked) { background: var(--p-surface); color: var(--p-ink); box-shadow: 0 1px 3px var(--p-shadow-strong); }
+.p-app .cal-plan-repeat label:has(input:focus-visible) { outline: 2px solid var(--p-focus); outline-offset: 2px; }
+.p-app .cal-plan-preview { padding: 10px 14px; border-radius: 10px; background: var(--p-accent-soft); color: var(--p-accent-ink); font-size: 13px; line-height: 1.6; }
+.p-app .cal-plan-error { padding: 12px 14px; border-radius: 10px; background: var(--p-danger-bg); color: var(--p-danger-ink); font-size: 14px; line-height: 1.6; }
+.p-app .cal-plan-submit { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px 20px; border: 0; border-radius: 10px; background: linear-gradient(180deg, color-mix(in srgb, var(--p-primary) 84%, white), var(--p-primary)); color: var(--p-on-primary); box-shadow: 0 1px 2px var(--p-shadow-color); font-size: 14px; font-weight: 650; transition: background-color 100ms var(--ease-out), transform 100ms var(--ease-out); }
+.p-app .cal-plan-submit:hover:not(:disabled) { background: var(--p-primary); }
+.p-app .cal-plan-submit:active:not(:disabled) { transform: scale(.98); }
+
+@container cal (max-width: 600px) {
+  .p-calendar .cal-event { background: var(--p-accent-secondary); }
+  .p-calendar .cal-event[data-by='child'] { background: var(--p-info-ink); }
+}
+@media (max-width: 650px) {
+  .p-calendar { --cal-row: clamp(52px, calc((100dvh - 440px) / 6), 96px); padding: 14px 10px 10px; }
+  .p-calendar .cal-header { padding-bottom: 12px; }
+  .p-calendar .cal-title { font-size: 18px; }
+  .p-calendar .cal-nav { width: 44px; height: 44px; }
+  .p-calendar .cal-weekdays { font-size: 11px; letter-spacing: 0; }
+  .p-calendar .cal-day { padding: 6px 2px; }
+  .p-app .cal-plan { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+}

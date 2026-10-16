@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { canStand, COLUMNS, fence, gatePoint, heroStart, isSwimming, moveHero, nearestVillager, npcs, props, ROWS, talkSpots, terrainAt, TILE, WORLD } from '../src/game/world.ts'
+import { canStand, COLUMNS, fence, gatePoint, heroStart, isSwimming, moveHero, nearestVillager, npcs, props, ROWS, TALK_RANGE, talkSpots, terrainAt, TILE, WORLD } from '../src/game/world.ts'
 import type { Point } from '../src/game/world.ts'
 import { cameraFor, gateFrame, pixelScale } from '../src/game/farmScene.ts'
 
@@ -112,4 +112,16 @@ test('art is scaled by whole device pixels', () => {
   assert.equal(pixelScale(390, 844, 3), 6)
   assert.equal(pixelScale(2560, 1440, 1), 3)
   assert.equal(pixelScale(1280, 720, 1.25), 3)
+})
+
+test('every villager can be walked up to within one tile, and the talk prompt ends beyond it', () => {
+  assert.equal(TALK_RANGE, TILE * 1.5)
+  for (const npc of npcs) {
+    const close = [...walkable].map(key => key.split(',').map(Number)).filter(([x, y]) => Math.hypot(x - npc.x, y - npc.y) <= TALK_RANGE)
+    assert.ok(close.length > 0, `${npc.kind} has a reachable spot within one tile`)
+    for (const [x, y] of close) assert.equal(nearestVillager({ x, y }), npc.kind, `${npc.kind} from ${x},${y}`)
+    const far = [...walkable].map(key => key.split(',').map(Number)).filter(([x, y]) => { const distance = Math.hypot(x - npc.x, y - npc.y); return distance > TALK_RANGE && distance < TILE * 2.5 })
+    assert.ok(far.length > 0)
+    for (const [x, y] of far) assert.notEqual(nearestVillager({ x, y }), npc.kind, `${npc.kind} too far from ${x},${y}`)
+  }
 })

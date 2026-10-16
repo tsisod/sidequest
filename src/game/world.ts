@@ -203,11 +203,14 @@ export function moveHero(point: Point, dx: number, dy: number): Point {
   return canStand(nextY) ? nextY : horizontal
 }
 
+export const TALK_RANGE = TILE * 1.5
+
+/** The villager the Interact key talks to: the closest one within a tile in any direction, diagonals included. */
 export function nearestVillager(point: Point): NpcKind | undefined {
   let nearest: { npc: NpcKind; distance: number } | undefined
-  for (const spot of talkSpots) {
-    const distance = Math.hypot(point.x - spot.door.x, point.y - spot.door.y)
-    if (distance < 30 && (!nearest || distance < nearest.distance)) nearest = { npc: spot.npc, distance }
+  for (const npc of npcs) {
+    const distance = Math.hypot(point.x - npc.x, point.y - npc.y)
+    if (distance <= TALK_RANGE && (!nearest || distance < nearest.distance)) nearest = { npc: npc.kind, distance }
   }
   return nearest?.npc
 }
